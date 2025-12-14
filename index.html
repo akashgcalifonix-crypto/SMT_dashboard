@@ -18,6 +18,7 @@
   .btn-green { background: #28a745; color: white; }
   .btn-gray { background: #6c757d; color: white; }
   .btn-red { background: #dc3545; color: white; padding: 5px 10px; font-size: 12px;}
+  .btn-info { background: #17a2b8; color: white; padding: 5px 10px; font-size: 12px; }
 
   /* Forms */
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
@@ -25,15 +26,9 @@
   input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
   input[readonly] { background-color: #e9ecef; color: #495057; font-weight: bold; }
 
-  /* Defect Rows - UPDATED LAYOUT */
+  /* Defect Rows */
   .defect-row { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: #f9f9f9; display: grid; grid-template-columns: 2fr 1fr 1fr 2fr 1fr 0.5fr; gap: 10px; align-items: end; }
   .img-preview { height: 40px; display: none; margin-top: 5px; border: 1px solid #ccc; }
-  
-  /* Mobile Responsive for Defect Row */
-  @media (max-width: 768px) {
-    .defect-row { grid-template-columns: 1fr 1fr; }
-    .defect-row > div:nth-child(4) { grid-column: span 2; } /* Analysis full width */
-  }
 
   /* Dashboard */
   .kpi-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;}
@@ -45,13 +40,36 @@
   .analysis-item { display: flex; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; gap: 15px; }
   .analysis-img { width: 100px; height: 100px; object-fit: contain; border: 1px solid #eee; }
 
+  /* MODAL (Popup) Styles */
+  .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+  .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 800px; border-radius: 8px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; }
+  .modal-footer { margin-top: 20px; text-align: right; border-top: 1px solid #ddd; padding-top: 10px; }
+  .close { font-size: 28px; font-weight: bold; cursor: pointer; }
+  
   /* Loading Overlay */
-  #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 999; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
+  #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1001; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
 </style>
 </head>
 <body>
 
 <div id="loader">Processing... Please Wait...</div>
+
+<!-- PREVIEW MODAL -->
+<div id="previewModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="margin:0">📄 Record Details Preview</h3>
+      <span class="close" onclick="closeModal()">&times;</span>
+    </div>
+    <div id="previewBody">
+      <!-- Content injected by JS -->
+    </div>
+    <div class="modal-footer" id="previewFooter">
+      <!-- Buttons injected by JS -->
+    </div>
+  </div>
+</div>
 
 <div class="container">
   <h2 style="text-align:center; color:#333;">🏭 SMT Master Dashboard</h2>
@@ -79,7 +97,7 @@
 
     <div style="overflow-x:auto;">
       <table border="1" style="width:100%; border-collapse:collapse; border-color:#ddd;">
-        <thead><tr style="background:#f1f1f1;"><th>Date</th><th>Line</th><th>Model</th><th>Input</th><th>Total Defect</th><th>Rej %</th><th>Action</th></tr></thead>
+        <thead><tr style="background:#f1f1f1;"><th>Date</th><th>Line</th><th>Model</th><th>Input</th><th>Defects</th><th>Rej %</th><th>Action</th></tr></thead>
         <tbody id="dash_table"></tbody>
       </table>
     </div>
@@ -98,20 +116,17 @@
       <div><label>Prepared By</label><input type="text" id="e_prep"></div>
     </div>
 
-    <h4 style="border-bottom: 2px solid #ddd; padding-bottom: 5px;">Defect Details Breakdown</h4>
-    <div style="font-size: 11px; color: #666; margin-bottom: 10px;">Format: Name | Qty | Rate% | Analysis | Image</div>
-    
+    <h4>Defect Details Breakdown</h4>
     <div id="defect_wrapper"></div>
     <button class="btn-gray" onclick="addDefectRow()">+ Add Defect</button>
 
-    <!-- NEW SUMMARY SECTION -->
     <div style="margin-top:20px; padding:15px; background:#e3f2fd; border-radius:8px; border:1px solid #90caf9;">
        <h4 style="margin-top:0;">Summary</h4>
        <div class="form-grid">
            <div><label>Total Defect Qty</label><input type="text" id="lbl_tot" readonly></div>
            <div><label>Overall Defect Rate %</label><input type="text" id="lbl_rate" readonly style="color:red; font-size:16px;"></div>
-           <div style="display:flex; align-items:end;">
-             <button class="btn-green" onclick="saveData()" style="width:100%;">SAVE RECORD</button>
+           <div style="display:flex; align-items:end; gap:10px;">
+             <button class="btn-blue" onclick="previewEntry()" style="flex:1;">👁️ PREVIEW & SAVE</button>
            </div>
        </div>
     </div>
@@ -120,7 +135,8 @@
   <!-- REPORT PAGE -->
   <div id="report" style="display:none;">
     <div class="form-grid no-print">
-      <div><label>Select Date</label><input type="date" id="r_date"></div>
+      <div><label>From Date</label><input type="date" id="r_date_start"></div>
+      <div><label>To Date</label><input type="date" id="r_date_end"></div>
       <div style="display:flex; align-items:end; gap:10px;">
         <button class="btn-blue" onclick="genReport()">Generate</button>
         <button class="btn-green" onclick="downloadPDF()">Download PDF</button>
@@ -226,43 +242,115 @@ function handleImg(input){
   }
 }
 
-// ✅ UPDATED CALCULATION LOGIC
 function calcTotal(){
   let inp = +document.getElementById('e_input').value || 0;
   let tot = 0;
   
-  // 1. Calculate Total Defect Qty first
   document.querySelectorAll('.d-qty').forEach(i => tot += (+i.value||0));
   
-  // 2. Update Total Summary Fields
   document.getElementById('lbl_tot').value = tot;
   document.getElementById('lbl_rate').value = inp > 0 ? (tot/inp*100).toFixed(2)+"%" : "0%";
 
-  // 3. Update Each Row's Percentage (Dynamically)
   document.querySelectorAll('.defect-row').forEach(row => {
      let qty = +row.querySelector('.d-qty').value || 0;
      let rateBox = row.querySelector('.d-rate');
-     
-     if(inp > 0 && qty > 0) {
-        rateBox.value = (qty / inp * 100).toFixed(2) + "%";
-     } else {
-        rateBox.value = "0%";
-     }
+     rateBox.value = (inp > 0 && qty > 0) ? (qty / inp * 100).toFixed(2) + "%" : "0%";
   });
 }
 
+// --- PREVIEW LOGIC (NEW) ---
+function previewEntry() {
+    // 1. Collect Data
+    const data = {
+        date: document.getElementById('e_date').value,
+        line: document.getElementById('e_line').value,
+        model: document.getElementById('e_model').value,
+        input: document.getElementById('e_input').value,
+        total: document.getElementById('lbl_tot').value,
+        rate: document.getElementById('lbl_rate').value,
+        prep: document.getElementById('e_prep').value,
+        defects: []
+    };
+
+    if(!data.input || !data.line) return alert("Please fill Line and Input Qty");
+
+    document.querySelectorAll('.defect-row').forEach(row => {
+        data.defects.push({
+            name: row.querySelector('.d-name').value,
+            qty: row.querySelector('.d-qty').value,
+            rate: row.querySelector('.d-rate').value,
+            ana: row.querySelector('.d-ana').value,
+            img: row.querySelector('.d-base64').value
+        });
+    });
+
+    // 2. Build HTML
+    let html = `
+        <table style="width:100%; border-collapse:collapse; border:1px solid #ddd; margin-bottom:10px;">
+            <tr><td><b>Date:</b> ${data.date}</td><td><b>Line:</b> ${data.line}</td><td><b>Model:</b> ${data.model}</td></tr>
+            <tr><td><b>Input:</b> ${data.input}</td><td><b>Total Defects:</b> ${data.total}</td><td><b>Rej %:</b> <span style="color:red; font-weight:bold">${data.rate}</span></td></tr>
+            <tr><td colspan="3"><b>Prepared By:</b> ${data.prep}</td></tr>
+        </table>
+        <h4>Defects List:</h4>
+        <table border="1" style="width:100%; border-collapse:collapse; font-size:12px;">
+            <tr style="background:#eee;"><th>Name</th><th>Qty</th><th>%</th><th>Analysis</th><th>Image</th></tr>
+    `;
+
+    data.defects.forEach(d => {
+        let imgTag = d.img ? `<img src="${d.img}" style="height:40px;">` : 'No Image';
+        html += `<tr><td>${d.name}</td><td>${d.qty}</td><td>${d.rate}</td><td>${d.ana}</td><td>${imgTag}</td></tr>`;
+    });
+    html += `</table>`;
+
+    // 3. Show Modal
+    document.getElementById('previewBody').innerHTML = html;
+    document.getElementById('previewFooter').innerHTML = `
+        <button class="btn-gray" onclick="closeModal()">Edit</button>
+        <button class="btn-green" onclick="saveData()">✅ Confirm & Save</button>
+    `;
+    document.getElementById('previewModal').style.display = "block";
+}
+
+function viewRecord(idx, r) {
+    // View Mode (Read Only)
+    let list = [];
+    try { list = JSON.parse(r[7]); } catch(e){}
+
+    let html = `
+        <table style="width:100%; border-collapse:collapse; border:1px solid #ddd; margin-bottom:10px;">
+            <tr><td><b>Date:</b> ${r[0]}</td><td><b>Line:</b> ${r[1]}</td><td><b>Model:</b> ${r[2]}</td></tr>
+            <tr><td><b>Input:</b> ${r[3]}</td><td><b>Total Defects:</b> ${r[4]}</td><td><b>Rej %:</b> <span style="color:red; font-weight:bold">${r[5]}</span></td></tr>
+            <tr><td colspan="3"><b>Prepared By:</b> ${r[6]}</td></tr>
+        </table>
+        <h4>Defects List:</h4>
+        <table border="1" style="width:100%; border-collapse:collapse; font-size:12px;">
+            <tr style="background:#eee;"><th>Name</th><th>Qty</th><th>Analysis</th><th>Image</th></tr>
+    `;
+
+    list.forEach(d => {
+        let imgTag = d.image ? `<img src="${d.image}" style="height:50px;">` : '-';
+        html += `<tr><td>${d.name}</td><td>${d.qty}</td><td>${d.analysis}</td><td>${imgTag}</td></tr>`;
+    });
+    html += `</table>`;
+
+    document.getElementById('previewBody').innerHTML = html;
+    document.getElementById('previewFooter').innerHTML = `<button class="btn-gray" onclick="closeModal()">Close</button>`;
+    document.getElementById('previewModal').style.display = "block";
+}
+
+function closeModal() { document.getElementById('previewModal').style.display = "none"; }
+
 async function saveData(){
   if(!API_URL.includes("script.google.com")){ alert("Please setup API URL in code first!"); return; }
-
+  closeModal(); // Close preview
   document.getElementById('loader').style.display = 'block';
   
-  // Collect Defects with Rate
   let defects = [];
   document.querySelectorAll('.defect-row').forEach(row => {
     defects.push({
       name: row.querySelector('.d-name').value,
       qty: row.querySelector('.d-qty').value,
-      rate: row.querySelector('.d-rate').value, // Saving Rate also
+      rate: row.querySelector('.d-rate').value,
       analysis: row.querySelector('.d-ana').value,
       image: row.querySelector('.d-base64').value
     });
@@ -282,10 +370,7 @@ async function saveData(){
   };
 
   try {
-    await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
     alert("✅ Data Saved Successfully!");
     location.reload();
   } catch(e) {
@@ -324,14 +409,19 @@ function renderDash(){
     else if(line<=16) { stats.f2_i+=inp; stats.f2_d+=def; }
     else { stats.fb_i+=inp; stats.fb_d+=def; }
 
+    // Color code rejection rate
+    let rejVal = parseFloat(r[5]);
+    let color = rejVal > 0 ? (rejVal > 1 ? 'red' : '#e65100') : 'green';
+
     tBody.innerHTML += `
       <tr>
         <td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${inp}</td>
         <td>${r[4]}</td>
-        <td style="color:${parseFloat(r[5]) > 1 ? 'red' : 'green'}; font-weight:bold;">${r[5]}</td>
+        <td style="color:${color}; font-weight:bold;">${r[5]}</td>
         <td>
-           <button class="btn-blue" style="font-size:10px;" onclick='editRow(${idx}, ${JSON.stringify(r)})'>Edit</button>
-           <button class="btn-red" style="font-size:10px;" onclick="delRow(${idx})">Del</button>
+           <button class="btn-info" onclick='viewRecord(${idx}, ${JSON.stringify(r)})'>👁️ View</button>
+           <button class="btn-blue" style="font-size:10px;" onclick='editRow(${idx}, ${JSON.stringify(r)})'>✏️</button>
+           <button class="btn-red" style="font-size:10px;" onclick="delRow(${idx})">🗑️</button>
         </td>
       </tr>
     `;
@@ -370,14 +460,24 @@ async function delRow(idx){
 
 // --- REPORT ---
 function genReport(){
-  let date = document.getElementById('r_date').value;
-  if(!date) return alert("Select Date");
+  let start = document.getElementById('r_date_start').value;
+  let end = document.getElementById('r_date_end').value;
+  
+  if(!start) return alert("Select Start Date");
+  if(!end) end = start; // If no end date, assume single day
   
   document.getElementById('print_area').style.display = 'block';
-  document.getElementById('r_subtitle').innerText = "Date: " + date;
+  document.getElementById('r_subtitle').innerText = `Period: ${start} to ${end}`;
 
-  let rData = allData.filter(r => r[0] === date);
+  // DATE RANGE FILTER
+  let rData = allData.filter(r => r[0] >= start && r[0] <= end);
   
+  if(rData.length === 0) {
+      alert("No data found in this range");
+      document.getElementById('print_area').style.display = 'none';
+      return;
+  }
+
   let totInp=0, totDef=0;
   let defectsMap = {};
 
@@ -414,7 +514,6 @@ function genReport(){
   sorted.forEach(s => {
     let imgs = s.imgs.map(u => `<img src="${u}" class="analysis-img">`).join("");
     let ana = [...new Set(s.ana)].join(", ");
-    // Individual Defect Rate Calculation for Report
     let defRate = totInp > 0 ? (s.qty / totInp * 100).toFixed(2) + "%" : "0%";
     
     html += `
