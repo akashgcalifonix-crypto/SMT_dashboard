@@ -23,15 +23,21 @@
   .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
   label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 12px; }
   input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
+  input[readonly] { background-color: #e9ecef; color: #495057; font-weight: bold; }
 
-  /* Defect Rows */
-  .defect-row { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: #f9f9f9; display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
-  .defect-row > div { flex: 1; min-width: 120px; }
+  /* Defect Rows - UPDATED LAYOUT */
+  .defect-row { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: #f9f9f9; display: grid; grid-template-columns: 2fr 1fr 1fr 2fr 1fr 0.5fr; gap: 10px; align-items: end; }
   .img-preview { height: 40px; display: none; margin-top: 5px; border: 1px solid #ccc; }
+  
+  /* Mobile Responsive for Defect Row */
+  @media (max-width: 768px) {
+    .defect-row { grid-template-columns: 1fr 1fr; }
+    .defect-row > div:nth-child(4) { grid-column: span 2; } /* Analysis full width */
+  }
 
   /* Dashboard */
-  .kpi-container { display: flex; gap: 15px; margin-bottom: 20px; }
-  .kpi-card { flex: 1; background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center; border-left: 5px solid #007bff; }
+  .kpi-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;}
+  .kpi-card { flex: 1; min-width: 150px; background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center; border-left: 5px solid #007bff; }
   .kpi-val { font-size: 24px; font-weight: bold; margin-top: 5px; }
 
   /* Report */
@@ -73,7 +79,7 @@
 
     <div style="overflow-x:auto;">
       <table border="1" style="width:100%; border-collapse:collapse; border-color:#ddd;">
-        <thead><tr style="background:#f1f1f1;"><th>Date</th><th>Line</th><th>Model</th><th>Input</th><th>Rej %</th><th>Action</th></tr></thead>
+        <thead><tr style="background:#f1f1f1;"><th>Date</th><th>Line</th><th>Model</th><th>Input</th><th>Total Defect</th><th>Rej %</th><th>Action</th></tr></thead>
         <tbody id="dash_table"></tbody>
       </table>
     </div>
@@ -92,14 +98,22 @@
       <div><label>Prepared By</label><input type="text" id="e_prep"></div>
     </div>
 
-    <h4>Defect Details</h4>
+    <h4 style="border-bottom: 2px solid #ddd; padding-bottom: 5px;">Defect Details Breakdown</h4>
+    <div style="font-size: 11px; color: #666; margin-bottom: 10px;">Format: Name | Qty | Rate% | Analysis | Image</div>
+    
     <div id="defect_wrapper"></div>
     <button class="btn-gray" onclick="addDefectRow()">+ Add Defect</button>
 
-    <div style="margin-top:20px; padding:15px; background:#eee; display:flex; gap:20px; align-items:center;">
-       <div><b>Total Defects:</b> <span id="lbl_tot">0</span></div>
-       <div><b>Rejection Rate:</b> <span id="lbl_rate">0%</span></div>
-       <button class="btn-green" onclick="saveData()">SAVE RECORD</button>
+    <!-- NEW SUMMARY SECTION -->
+    <div style="margin-top:20px; padding:15px; background:#e3f2fd; border-radius:8px; border:1px solid #90caf9;">
+       <h4 style="margin-top:0;">Summary</h4>
+       <div class="form-grid">
+           <div><label>Total Defect Qty</label><input type="text" id="lbl_tot" readonly></div>
+           <div><label>Overall Defect Rate %</label><input type="text" id="lbl_rate" readonly style="color:red; font-size:16px;"></div>
+           <div style="display:flex; align-items:end;">
+             <button class="btn-green" onclick="saveData()" style="width:100%;">SAVE RECORD</button>
+           </div>
+       </div>
     </div>
   </div>
 
@@ -161,9 +175,10 @@ function addDefectRow(data = null){
   const div = document.createElement('div');
   div.className = 'defect-row';
   div.innerHTML = `
-    <div><label>Defect Name</label><input class="d-name"></div>
-    <div><label>Qty</label><input type="number" class="d-qty" oninput="calcTotal()"></div>
-    <div><label>Analysis</label><input class="d-ana"></div>
+    <div><label>Defect Name</label><input class="d-name" placeholder="Name"></div>
+    <div><label>Qty</label><input type="number" class="d-qty" oninput="calcTotal()" placeholder="0"></div>
+    <div><label>Defect %</label><input class="d-rate" readonly placeholder="%"></div>
+    <div><label>Analysis</label><input class="d-ana" placeholder="Root Cause"></div>
     <div><label>Image</label><input type="file" accept="image/*" onchange="handleImg(this)"></div>
     <div style="text-align:center;">
       <img class="img-preview">
@@ -176,6 +191,7 @@ function addDefectRow(data = null){
   if(data){
     div.querySelector('.d-name').value = data.name;
     div.querySelector('.d-qty').value = data.qty;
+    div.querySelector('.d-rate').value = data.rate || "0%";
     div.querySelector('.d-ana').value = data.analysis;
     if(data.image) {
        div.querySelector('.img-preview').src = data.image;
@@ -189,13 +205,12 @@ function handleImg(input){
   if(input.files && input.files[0]){
     const reader = new FileReader();
     reader.onload = (e) => {
-      // Resize to reduce payload size
       let img = new Image();
       img.onload = () => {
         let canvas = document.createElement('canvas');
         let ctx = canvas.getContext('2d');
         let w = img.width, h = img.height;
-        if(w>600){ h *= 600/w; w=600; } // Limit width to 600px
+        if(w>600){ h *= 600/w; w=600; } 
         canvas.width = w; canvas.height = h;
         ctx.drawImage(img, 0, 0, w, h);
         let base64 = canvas.toDataURL('image/jpeg', 0.6);
@@ -211,13 +226,29 @@ function handleImg(input){
   }
 }
 
+// ✅ UPDATED CALCULATION LOGIC
 function calcTotal(){
   let inp = +document.getElementById('e_input').value || 0;
   let tot = 0;
+  
+  // 1. Calculate Total Defect Qty first
   document.querySelectorAll('.d-qty').forEach(i => tot += (+i.value||0));
   
-  document.getElementById('lbl_tot').innerText = tot;
-  document.getElementById('lbl_rate').innerText = inp>0 ? (tot/inp*100).toFixed(2)+"%" : "0%";
+  // 2. Update Total Summary Fields
+  document.getElementById('lbl_tot').value = tot;
+  document.getElementById('lbl_rate').value = inp > 0 ? (tot/inp*100).toFixed(2)+"%" : "0%";
+
+  // 3. Update Each Row's Percentage (Dynamically)
+  document.querySelectorAll('.defect-row').forEach(row => {
+     let qty = +row.querySelector('.d-qty').value || 0;
+     let rateBox = row.querySelector('.d-rate');
+     
+     if(inp > 0 && qty > 0) {
+        rateBox.value = (qty / inp * 100).toFixed(2) + "%";
+     } else {
+        rateBox.value = "0%";
+     }
+  });
 }
 
 async function saveData(){
@@ -225,12 +256,13 @@ async function saveData(){
 
   document.getElementById('loader').style.display = 'block';
   
-  // Collect Defects
+  // Collect Defects with Rate
   let defects = [];
   document.querySelectorAll('.defect-row').forEach(row => {
     defects.push({
       name: row.querySelector('.d-name').value,
       qty: row.querySelector('.d-qty').value,
+      rate: row.querySelector('.d-rate').value, // Saving Rate also
       analysis: row.querySelector('.d-ana').value,
       image: row.querySelector('.d-base64').value
     });
@@ -243,22 +275,21 @@ async function saveData(){
     line: document.getElementById('e_line').value,
     model: document.getElementById('e_model').value,
     input: document.getElementById('e_input').value,
-    totalDef: document.getElementById('lbl_tot').innerText,
-    rejRate: document.getElementById('lbl_rate').innerText,
+    totalDef: document.getElementById('lbl_tot').value,
+    rejRate: document.getElementById('lbl_rate').value,
     prep: document.getElementById('e_prep').value,
     defects: defects
   };
 
   try {
-    // Send as Text Plain to bypass CORS
     await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify(payload)
     });
-    alert("Saved Successfully!");
+    alert("✅ Data Saved Successfully!");
     location.reload();
   } catch(e) {
-    alert("Error saving data");
+    alert("❌ Error saving data");
     console.error(e);
   } finally {
     document.getElementById('loader').style.display = 'none';
@@ -296,7 +327,8 @@ function renderDash(){
     tBody.innerHTML += `
       <tr>
         <td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${inp}</td>
-        <td>${r[5]}</td>
+        <td>${r[4]}</td>
+        <td style="color:${parseFloat(r[5]) > 1 ? 'red' : 'green'}; font-weight:bold;">${r[5]}</td>
         <td>
            <button class="btn-blue" style="font-size:10px;" onclick='editRow(${idx}, ${JSON.stringify(r)})'>Edit</button>
            <button class="btn-red" style="font-size:10px;" onclick="delRow(${idx})">Del</button>
@@ -367,7 +399,6 @@ function genReport(){
   document.getElementById('r_def').innerText = totDef;
   document.getElementById('r_rate_val').innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0%";
 
-  // Chart
   let chartData = [['Defect', 'Qty']];
   let sorted = Object.keys(defectsMap).map(k=>({name:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty).slice(0,5);
   sorted.forEach(s => chartData.push([s.name, s.qty]));
@@ -379,16 +410,18 @@ function genReport(){
      document.getElementById('chart_div').innerHTML = "No Defects Found";
   }
 
-  // Detailed Analysis
   let html = "";
   sorted.forEach(s => {
     let imgs = s.imgs.map(u => `<img src="${u}" class="analysis-img">`).join("");
     let ana = [...new Set(s.ana)].join(", ");
+    // Individual Defect Rate Calculation for Report
+    let defRate = totInp > 0 ? (s.qty / totInp * 100).toFixed(2) + "%" : "0%";
+    
     html += `
       <div class="analysis-item">
         <div style="flex:1">
            <h4>${s.name}</h4>
-           <p><b>Qty:</b> ${s.qty}</p>
+           <p><b>Qty:</b> ${s.qty} | <b>Contribution:</b> ${defRate}</p>
            <p><b>Analysis:</b> ${ana}</p>
         </div>
         <div>${imgs}</div>
@@ -405,5 +438,4 @@ function downloadPDF(){
 
 </script>
 </body>
-
 </html>
