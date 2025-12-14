@@ -40,14 +40,13 @@
   .analysis-item { display: flex; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; gap: 15px; }
   .analysis-img { width: 100px; height: 100px; object-fit: contain; border: 1px solid #eee; }
 
-  /* MODAL (Popup) Styles */
+  /* MODAL (Popup) */
   .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
-  .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 800px; border-radius: 8px; }
+  .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 800px; border-radius: 8px; }
   .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; }
-  .modal-footer { margin-top: 20px; text-align: right; border-top: 1px solid #ddd; padding-top: 10px; }
   .close { font-size: 28px; font-weight: bold; cursor: pointer; }
   
-  /* Loading Overlay */
+  /* Loader */
   #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1001; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
 </style>
 </head>
@@ -62,12 +61,8 @@
       <h3 style="margin:0">📄 Record Details Preview</h3>
       <span class="close" onclick="closeModal()">&times;</span>
     </div>
-    <div id="previewBody">
-      <!-- Content injected by JS -->
-    </div>
-    <div class="modal-footer" id="previewFooter">
-      <!-- Buttons injected by JS -->
-    </div>
+    <div id="previewBody"></div>
+    <div style="margin-top:20px; text-align:right; border-top:1px solid #eee; padding-top:10px;" id="previewFooter"></div>
   </div>
 </div>
 
@@ -116,7 +111,7 @@
       <div><label>Prepared By</label><input type="text" id="e_prep"></div>
     </div>
 
-    <h4>Defect Details Breakdown</h4>
+    <h4>Defect Details</h4>
     <div id="defect_wrapper"></div>
     <button class="btn-gray" onclick="addDefectRow()">+ Add Defect</button>
 
@@ -125,8 +120,8 @@
        <div class="form-grid">
            <div><label>Total Defect Qty</label><input type="text" id="lbl_tot" readonly></div>
            <div><label>Overall Defect Rate %</label><input type="text" id="lbl_rate" readonly style="color:red; font-size:16px;"></div>
-           <div style="display:flex; align-items:end; gap:10px;">
-             <button class="btn-blue" onclick="previewEntry()" style="flex:1;">👁️ PREVIEW & SAVE</button>
+           <div style="display:flex; align-items:end;">
+             <button class="btn-blue" onclick="previewEntry()" style="width:100%;">👁️ PREVIEW & SAVE</button>
            </div>
        </div>
     </div>
@@ -166,13 +161,12 @@
 </div>
 
 <script>
-// ⚠️ PASTE YOUR GOOGLE DEPLOYMENT URL HERE
+// ⚠️ YAHAN APNA URL UPDATE KAREIN
 const API_URL = "https://script.google.com/macros/s/AKfycbzkn_YQtnDPW47OTPt9ZlASfj66JMmYdGjbCOvhVL3mwXvfERdtFY761KDqut88dv42FQ/exec";
 
 let allData = [];
 google.charts.load('current', {'packages':['corechart']});
 
-// INIT
 window.onload = () => {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('e_date').value = today;
@@ -186,7 +180,20 @@ function showPage(id){
   document.getElementById(id).style.display='block';
 }
 
-// --- DATA ENTRY FUNCTIONS ---
+/* --- HELPER: FORMAT PERCENTAGE (The Fix) --- */
+function formatPct(val) {
+    let s = String(val);
+    if(s.includes("%")) return s; // Already correct
+    
+    // If decimal like 0.001 or 0.0222, convert to %
+    let n = parseFloat(s);
+    if(isNaN(n)) return "0.00%";
+    
+    // Multipling by 100 to fix decimal issue
+    return (n * 100).toFixed(2) + "%";
+}
+
+// --- DATA ENTRY ---
 function addDefectRow(data = null){
   const div = document.createElement('div');
   div.className = 'defect-row';
@@ -194,7 +201,7 @@ function addDefectRow(data = null){
     <div><label>Defect Name</label><input class="d-name" placeholder="Name"></div>
     <div><label>Qty</label><input type="number" class="d-qty" oninput="calcTotal()" placeholder="0"></div>
     <div><label>Defect %</label><input class="d-rate" readonly placeholder="%"></div>
-    <div><label>Analysis</label><input class="d-ana" placeholder="Root Cause"></div>
+    <div><label>Analysis</label><input class="d-ana" placeholder="Cause"></div>
     <div><label>Image</label><input type="file" accept="image/*" onchange="handleImg(this)"></div>
     <div style="text-align:center;">
       <img class="img-preview">
@@ -207,7 +214,7 @@ function addDefectRow(data = null){
   if(data){
     div.querySelector('.d-name').value = data.name;
     div.querySelector('.d-qty').value = data.qty;
-    div.querySelector('.d-rate').value = data.rate || "0%";
+    div.querySelector('.d-rate').value = formatPct(data.rate || 0);
     div.querySelector('.d-ana').value = data.analysis;
     if(data.image) {
        div.querySelector('.img-preview').src = data.image;
@@ -230,7 +237,6 @@ function handleImg(input){
         canvas.width = w; canvas.height = h;
         ctx.drawImage(img, 0, 0, w, h);
         let base64 = canvas.toDataURL('image/jpeg', 0.6);
-        
         let row = input.closest('.defect-row');
         row.querySelector('.img-preview').src = base64;
         row.querySelector('.img-preview').style.display='block';
@@ -245,12 +251,15 @@ function handleImg(input){
 function calcTotal(){
   let inp = +document.getElementById('e_input').value || 0;
   let tot = 0;
-  
   document.querySelectorAll('.d-qty').forEach(i => tot += (+i.value||0));
   
   document.getElementById('lbl_tot').value = tot;
-  document.getElementById('lbl_rate').value = inp > 0 ? (tot/inp*100).toFixed(2)+"%" : "0%";
+  
+  // Calculate Overall %
+  let overallPct = inp > 0 ? (tot/inp*100).toFixed(2)+"%" : "0.00%";
+  document.getElementById('lbl_rate').value = overallPct;
 
+  // Calculate Row %
   document.querySelectorAll('.defect-row').forEach(row => {
      let qty = +row.querySelector('.d-qty').value || 0;
      let rateBox = row.querySelector('.d-rate');
@@ -258,16 +267,15 @@ function calcTotal(){
   });
 }
 
-// --- PREVIEW LOGIC (NEW) ---
+// --- PREVIEW & SAVE ---
 function previewEntry() {
-    // 1. Collect Data
-    const data = {
+    let data = {
         date: document.getElementById('e_date').value,
         line: document.getElementById('e_line').value,
         model: document.getElementById('e_model').value,
         input: document.getElementById('e_input').value,
         total: document.getElementById('lbl_tot').value,
-        rate: document.getElementById('lbl_rate').value,
+        rate: document.getElementById('lbl_rate').value, // This is already formatted by calcTotal
         prep: document.getElementById('e_prep').value,
         defects: []
     };
@@ -284,7 +292,6 @@ function previewEntry() {
         });
     });
 
-    // 2. Build HTML
     let html = `
         <table style="width:100%; border-collapse:collapse; border:1px solid #ddd; margin-bottom:10px;">
             <tr><td><b>Date:</b> ${data.date}</td><td><b>Line:</b> ${data.line}</td><td><b>Model:</b> ${data.model}</td></tr>
@@ -292,17 +299,16 @@ function previewEntry() {
             <tr><td colspan="3"><b>Prepared By:</b> ${data.prep}</td></tr>
         </table>
         <h4>Defects List:</h4>
-        <table border="1" style="width:100%; border-collapse:collapse; font-size:12px;">
+        <table border="1" style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">
             <tr style="background:#eee;"><th>Name</th><th>Qty</th><th>%</th><th>Analysis</th><th>Image</th></tr>
     `;
 
     data.defects.forEach(d => {
-        let imgTag = d.img ? `<img src="${d.img}" style="height:40px;">` : 'No Image';
+        let imgTag = d.img ? `<img src="${d.img}" style="height:40px;">` : '-';
         html += `<tr><td>${d.name}</td><td>${d.qty}</td><td>${d.rate}</td><td>${d.ana}</td><td>${imgTag}</td></tr>`;
     });
     html += `</table>`;
 
-    // 3. Show Modal
     document.getElementById('previewBody').innerHTML = html;
     document.getElementById('previewFooter').innerHTML = `
         <button class="btn-gray" onclick="closeModal()">Edit</button>
@@ -312,24 +318,28 @@ function previewEntry() {
 }
 
 function viewRecord(idx, r) {
-    // View Mode (Read Only)
     let list = [];
     try { list = JSON.parse(r[7]); } catch(e){}
+
+    // Fix Rej % display using helper
+    let displayRate = formatPct(r[5]);
 
     let html = `
         <table style="width:100%; border-collapse:collapse; border:1px solid #ddd; margin-bottom:10px;">
             <tr><td><b>Date:</b> ${r[0]}</td><td><b>Line:</b> ${r[1]}</td><td><b>Model:</b> ${r[2]}</td></tr>
-            <tr><td><b>Input:</b> ${r[3]}</td><td><b>Total Defects:</b> ${r[4]}</td><td><b>Rej %:</b> <span style="color:red; font-weight:bold">${r[5]}</span></td></tr>
+            <tr><td><b>Input:</b> ${r[3]}</td><td><b>Total Defects:</b> ${r[4]}</td><td><b>Rej %:</b> <span style="color:red; font-weight:bold">${displayRate}</span></td></tr>
             <tr><td colspan="3"><b>Prepared By:</b> ${r[6]}</td></tr>
         </table>
         <h4>Defects List:</h4>
-        <table border="1" style="width:100%; border-collapse:collapse; font-size:12px;">
-            <tr style="background:#eee;"><th>Name</th><th>Qty</th><th>Analysis</th><th>Image</th></tr>
+        <table border="1" style="width:100%; border-collapse:collapse; font-size:12px; text-align:center;">
+            <tr style="background:#eee;"><th>Name</th><th>Qty</th><th>%</th><th>Analysis</th><th>Image</th></tr>
     `;
 
     list.forEach(d => {
         let imgTag = d.image ? `<img src="${d.image}" style="height:50px;">` : '-';
-        html += `<tr><td>${d.name}</td><td>${d.qty}</td><td>${d.analysis}</td><td>${imgTag}</td></tr>`;
+        // Ensure defect rate is formatted
+        let dRate = formatPct(d.rate || 0);
+        html += `<tr><td>${d.name}</td><td>${d.qty}</td><td>${dRate}</td><td>${d.analysis}</td><td>${imgTag}</td></tr>`;
     });
     html += `</table>`;
 
@@ -342,7 +352,7 @@ function closeModal() { document.getElementById('previewModal').style.display = 
 
 async function saveData(){
   if(!API_URL.includes("script.google.com")){ alert("Please setup API URL in code first!"); return; }
-  closeModal(); // Close preview
+  closeModal(); 
   document.getElementById('loader').style.display = 'block';
   
   let defects = [];
@@ -364,7 +374,7 @@ async function saveData(){
     model: document.getElementById('e_model').value,
     input: document.getElementById('e_input').value,
     totalDef: document.getElementById('lbl_tot').value,
-    rejRate: document.getElementById('lbl_rate').value,
+    rejRate: document.getElementById('lbl_rate').value, // Sending String "0.10%"
     prep: document.getElementById('e_prep').value,
     defects: defects
   };
@@ -375,13 +385,12 @@ async function saveData(){
     location.reload();
   } catch(e) {
     alert("❌ Error saving data");
-    console.error(e);
   } finally {
     document.getElementById('loader').style.display = 'none';
   }
 }
 
-// --- LOAD DATA ---
+// --- DASHBOARD LOAD ---
 async function loadData(){
   try {
     let res = await fetch(API_URL);
@@ -409,15 +418,19 @@ function renderDash(){
     else if(line<=16) { stats.f2_i+=inp; stats.f2_d+=def; }
     else { stats.fb_i+=inp; stats.fb_d+=def; }
 
-    // Color code rejection rate
-    let rejVal = parseFloat(r[5]);
-    let color = rejVal > 0 ? (rejVal > 1 ? 'red' : '#e65100') : 'green';
+    // --- FIX: DISPLAY CORRECT PERCENTAGE ---
+    let displayRej = formatPct(r[5]); // Using helper to fix 0.001 -> 0.10%
+
+    // Color logic
+    let valStr = displayRej.replace("%", ""); 
+    let valNum = parseFloat(valStr);
+    let color = valNum > 0 ? (valNum > 1 ? 'red' : '#e65100') : 'green';
 
     tBody.innerHTML += `
       <tr>
         <td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${inp}</td>
         <td>${r[4]}</td>
-        <td style="color:${color}; font-weight:bold;">${r[5]}</td>
+        <td style="color:${color}; font-weight:bold;">${displayRej}</td>
         <td>
            <button class="btn-info" onclick='viewRecord(${idx}, ${JSON.stringify(r)})'>👁️ View</button>
            <button class="btn-blue" style="font-size:10px;" onclick='editRow(${idx}, ${JSON.stringify(r)})'>✏️</button>
@@ -427,7 +440,7 @@ function renderDash(){
     `;
   });
 
-  const rate = (d,i) => i>0 ? (d/i*100).toFixed(2)+"%" : "0%";
+  const rate = (d,i) => i>0 ? (d/i*100).toFixed(2)+"%" : "0.00%";
   document.getElementById('k_all').innerText = rate(stats.all_d, stats.all_i);
   document.getElementById('k_f1').innerText = rate(stats.f1_d, stats.f1_i);
   document.getElementById('k_f2').innerText = rate(stats.f2_d, stats.f2_i);
@@ -462,21 +475,14 @@ async function delRow(idx){
 function genReport(){
   let start = document.getElementById('r_date_start').value;
   let end = document.getElementById('r_date_end').value;
-  
   if(!start) return alert("Select Start Date");
-  if(!end) end = start; // If no end date, assume single day
+  if(!end) end = start; 
   
   document.getElementById('print_area').style.display = 'block';
   document.getElementById('r_subtitle').innerText = `Period: ${start} to ${end}`;
 
-  // DATE RANGE FILTER
   let rData = allData.filter(r => r[0] >= start && r[0] <= end);
-  
-  if(rData.length === 0) {
-      alert("No data found in this range");
-      document.getElementById('print_area').style.display = 'none';
-      return;
-  }
+  if(rData.length === 0) { alert("No data"); document.getElementById('print_area').style.display = 'none'; return; }
 
   let totInp=0, totDef=0;
   let defectsMap = {};
@@ -497,7 +503,7 @@ function genReport(){
 
   document.getElementById('r_inp').innerText = totInp;
   document.getElementById('r_def').innerText = totDef;
-  document.getElementById('r_rate_val').innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0%";
+  document.getElementById('r_rate_val').innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
 
   let chartData = [['Defect', 'Qty']];
   let sorted = Object.keys(defectsMap).map(k=>({name:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty).slice(0,5);
@@ -506,15 +512,13 @@ function genReport(){
   if(sorted.length > 0){
      let chart = new google.visualization.PieChart(document.getElementById('chart_div'));
      chart.draw(google.visualization.arrayToDataTable(chartData), {title:'Top 5 Defects', is3D:true});
-  } else {
-     document.getElementById('chart_div').innerHTML = "No Defects Found";
-  }
+  } else { document.getElementById('chart_div').innerHTML = "No Defects"; }
 
   let html = "";
   sorted.forEach(s => {
     let imgs = s.imgs.map(u => `<img src="${u}" class="analysis-img">`).join("");
     let ana = [...new Set(s.ana)].join(", ");
-    let defRate = totInp > 0 ? (s.qty / totInp * 100).toFixed(2) + "%" : "0%";
+    let defRate = totInp > 0 ? (s.qty / totInp * 100).toFixed(2) + "%" : "0.00%";
     
     html += `
       <div class="analysis-item">
