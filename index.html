@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMT Master Dashboard</title>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+  .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  
+  /* Buttons & Nav */
+  .nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+  button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
+  .btn-blue { background: #007bff; color: white; }
+  .btn-green { background: #28a745; color: white; }
+  .btn-gray { background: #6c757d; color: white; }
+  .btn-red { background: #dc3545; color: white; padding: 5px 10px; font-size: 12px;}
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+  label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 12px; }
+  input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
+
+  /* Defect Rows */
+  .defect-row { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: #f9f9f9; display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+  .defect-row > div { flex: 1; min-width: 120px; }
+  .img-preview { height: 40px; display: none; margin-top: 5px; border: 1px solid #ccc; }
+
+  /* Dashboard */
+  .kpi-container { display: flex; gap: 15px; margin-bottom: 20px; }
+  .kpi-card { flex: 1; background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center; border-left: 5px solid #007bff; }
+  .kpi-val { font-size: 24px; font-weight: bold; margin-top: 5px; }
+
+  /* Report */
+  .report-box { border: 1px solid #000; padding: 20px; display: none; margin-top: 20px; }
+  .analysis-item { display: flex; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; gap: 15px; }
+  .analysis-img { width: 100px; height: 100px; object-fit: contain; border: 1px solid #eee; }
+
+  /* Loading Overlay */
+  #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 999; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
+</style>
+</head>
+<body>
+
+<div id="loader">Processing... Please Wait...</div>
+
+<div class="container">
+  <h2 style="text-align:center; color:#333;">🏭 SMT Master Dashboard</h2>
+
+  <div class="nav">
+    <button class="btn-blue" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="btn-gray" onclick="showPage('entry')">Data Entry</button>
+    <button class="btn-green" onclick="showPage('report')">Analysis Report</button>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div id="dashboard">
+    <div class="form-grid">
+      <div><label>From</label><input type="date" id="dash_from"></div>
+      <div><label>To</label><input type="date" id="dash_to"></div>
+      <div style="display:flex; align-items:end;"><button class="btn-blue" onclick="loadData()">Filter Data</button></div>
+    </div>
+
+    <div class="kpi-container">
+       <div class="kpi-card"><div>Overall Rejection</div><div class="kpi-val" id="k_all">0%</div></div>
+       <div class="kpi-card" style="border-color:#28a745; background:#e8f5e9;"><div>Floor 1</div><div class="kpi-val" id="k_f1">0%</div></div>
+       <div class="kpi-card" style="border-color:#ff9800; background:#fff3e0;"><div>Floor 2</div><div class="kpi-val" id="k_f2">0%</div></div>
+       <div class="kpi-card" style="border-color:#6f42c1; background:#f3e5f5;"><div>Basement</div><div class="kpi-val" id="k_fb">0%</div></div>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table border="1" style="width:100%; border-collapse:collapse; border-color:#ddd;">
+        <thead><tr style="background:#f1f1f1;"><th>Date</th><th>Line</th><th>Model</th><th>Input</th><th>Rej %</th><th>Action</th></tr></thead>
+        <tbody id="dash_table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ENTRY PAGE -->
+  <div id="entry" style="display:none;">
+    <h3>📝 Add / Edit Record</h3>
+    <input type="hidden" id="edit_index">
+    
+    <div class="form-grid">
+      <div><label>Date</label><input type="date" id="e_date"></div>
+      <div><label>Line</label><input type="number" id="e_line" placeholder="1-24"></div>
+      <div><label>Model</label><input type="text" id="e_model"></div>
+      <div><label>Input Qty</label><input type="number" id="e_input" oninput="calcTotal()"></div>
+      <div><label>Prepared By</label><input type="text" id="e_prep"></div>
+    </div>
+
+    <h4>Defect Details</h4>
+    <div id="defect_wrapper"></div>
+    <button class="btn-gray" onclick="addDefectRow()">+ Add Defect</button>
+
+    <div style="margin-top:20px; padding:15px; background:#eee; display:flex; gap:20px; align-items:center;">
+       <div><b>Total Defects:</b> <span id="lbl_tot">0</span></div>
+       <div><b>Rejection Rate:</b> <span id="lbl_rate">0%</span></div>
+       <button class="btn-green" onclick="saveData()">SAVE RECORD</button>
+    </div>
+  </div>
+
+  <!-- REPORT PAGE -->
+  <div id="report" style="display:none;">
+    <div class="form-grid no-print">
+      <div><label>Select Date</label><input type="date" id="r_date"></div>
+      <div style="display:flex; align-items:end; gap:10px;">
+        <button class="btn-blue" onclick="genReport()">Generate</button>
+        <button class="btn-green" onclick="downloadPDF()">Download PDF</button>
+      </div>
+    </div>
+
+    <div id="print_area" class="report-box">
+      <h2 style="text-align:center;">SMT QUALITY ANALYSIS REPORT</h2>
+      <p style="text-align:center;" id="r_subtitle">--</p>
+      
+      <table style="width:100%; border:1px solid #000; margin-bottom:20px; text-align:center;">
+        <tr>
+          <td style="padding:10px;"><b>Total Input:</b> <span id="r_inp">0</span></td>
+          <td style="padding:10px;"><b>Total Defect:</b> <span id="r_def">0</span></td>
+          <td style="padding:10px;"><b>Rejection Rate:</b> <span id="r_rate_val">0%</span></td>
+        </tr>
+      </table>
+
+      <h4>🏆 Top 5 Defects Contribution</h4>
+      <div id="chart_div" style="width:100%; height:300px;"></div>
+
+      <h4>🔍 Detailed Analysis</h4>
+      <div id="analysis_list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ⚠️ PASTE YOUR GOOGLE DEPLOYMENT URL HERE
+const API_URL = "YAHAN_APNA_GOOGLE_SCRIPT_URL_PASTE_KAREIN";
+
+let allData = [];
+google.charts.load('current', {'packages':['corechart']});
+
+// INIT
+window.onload = () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('e_date').value = today;
+  document.getElementById('dash_from').value = today;
+  addDefectRow();
+  loadData();
+};
+
+function showPage(id){
+  document.querySelectorAll('#dashboard, #entry, #report').forEach(d => d.style.display='none');
+  document.getElementById(id).style.display='block';
+}
+
+// --- DATA ENTRY FUNCTIONS ---
+function addDefectRow(data = null){
+  const div = document.createElement('div');
+  div.className = 'defect-row';
+  div.innerHTML = `
+    <div><label>Defect Name</label><input class="d-name"></div>
+    <div><label>Qty</label><input type="number" class="d-qty" oninput="calcTotal()"></div>
+    <div><label>Analysis</label><input class="d-ana"></div>
+    <div><label>Image</label><input type="file" accept="image/*" onchange="handleImg(this)"></div>
+    <div style="text-align:center;">
+      <img class="img-preview">
+      <input type="hidden" class="d-base64">
+      <button class="btn-red" onclick="this.parentElement.parentElement.remove(); calcTotal()">X</button>
+    </div>
+  `;
+  document.getElementById('defect_wrapper').appendChild(div);
+
+  if(data){
+    div.querySelector('.d-name').value = data.name;
+    div.querySelector('.d-qty').value = data.qty;
+    div.querySelector('.d-ana').value = data.analysis;
+    if(data.image) {
+       div.querySelector('.img-preview').src = data.image;
+       div.querySelector('.img-preview').style.display = 'block';
+       div.querySelector('.d-base64').value = data.image;
+    }
+  }
+}
+
+function handleImg(input){
+  if(input.files && input.files[0]){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      // Resize to reduce payload size
+      let img = new Image();
+      img.onload = () => {
+        let canvas = document.createElement('canvas');
+        let ctx = canvas.getContext('2d');
+        let w = img.width, h = img.height;
+        if(w>600){ h *= 600/w; w=600; } // Limit width to 600px
+        canvas.width = w; canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        let base64 = canvas.toDataURL('image/jpeg', 0.6);
+        
+        let row = input.closest('.defect-row');
+        row.querySelector('.img-preview').src = base64;
+        row.querySelector('.img-preview').style.display='block';
+        row.querySelector('.d-base64').value = base64;
+      }
+      img.src = e.target.result;
+    }
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function calcTotal(){
+  let inp = +document.getElementById('e_input').value || 0;
+  let tot = 0;
+  document.querySelectorAll('.d-qty').forEach(i => tot += (+i.value||0));
+  
+  document.getElementById('lbl_tot').innerText = tot;
+  document.getElementById('lbl_rate').innerText = inp>0 ? (tot/inp*100).toFixed(2)+"%" : "0%";
+}
+
+async function saveData(){
+  if(!API_URL.includes("script.google.com")){ alert("Please setup API URL in code first!"); return; }
+
+  document.getElementById('loader').style.display = 'block';
+  
+  // Collect Defects
+  let defects = [];
+  document.querySelectorAll('.defect-row').forEach(row => {
+    defects.push({
+      name: row.querySelector('.d-name').value,
+      qty: row.querySelector('.d-qty').value,
+      analysis: row.querySelector('.d-ana').value,
+      image: row.querySelector('.d-base64').value
+    });
+  });
+
+  let payload = {
+    action: "save",
+    rowIndex: document.getElementById('edit_index').value,
+    date: document.getElementById('e_date').value,
+    line: document.getElementById('e_line').value,
+    model: document.getElementById('e_model').value,
+    input: document.getElementById('e_input').value,
+    totalDef: document.getElementById('lbl_tot').innerText,
+    rejRate: document.getElementById('lbl_rate').innerText,
+    prep: document.getElementById('e_prep').value,
+    defects: defects
+  };
+
+  try {
+    // Send as Text Plain to bypass CORS
+    await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    alert("Saved Successfully!");
+    location.reload();
+  } catch(e) {
+    alert("Error saving data");
+    console.error(e);
+  } finally {
+    document.getElementById('loader').style.display = 'none';
+  }
+}
+
+// --- LOAD DATA ---
+async function loadData(){
+  try {
+    let res = await fetch(API_URL);
+    let json = await res.json();
+    allData = json.data;
+    renderDash();
+  } catch(e) { console.log("Load Error", e); }
+}
+
+function renderDash(){
+  let from = document.getElementById('dash_from').value;
+  let to = document.getElementById('dash_to').value || from;
+  let tBody = document.getElementById('dash_table');
+  tBody.innerHTML = "";
+
+  let stats = { all_i:0, all_d:0, f1_i:0, f1_d:0, f2_i:0, f2_d:0, fb_i:0, fb_d:0 };
+
+  allData.forEach((r, idx) => {
+    if(r[0] < from || r[0] > to) return;
+
+    let line = +r[1]; let inp = +r[3]; let def = +r[4];
+    stats.all_i += inp; stats.all_d += def;
+    
+    if(line<=8) { stats.f1_i+=inp; stats.f1_d+=def; }
+    else if(line<=16) { stats.f2_i+=inp; stats.f2_d+=def; }
+    else { stats.fb_i+=inp; stats.fb_d+=def; }
+
+    tBody.innerHTML += `
+      <tr>
+        <td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${inp}</td>
+        <td>${r[5]}</td>
+        <td>
+           <button class="btn-blue" style="font-size:10px;" onclick='editRow(${idx}, ${JSON.stringify(r)})'>Edit</button>
+           <button class="btn-red" style="font-size:10px;" onclick="delRow(${idx})">Del</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  const rate = (d,i) => i>0 ? (d/i*100).toFixed(2)+"%" : "0%";
+  document.getElementById('k_all').innerText = rate(stats.all_d, stats.all_i);
+  document.getElementById('k_f1').innerText = rate(stats.f1_d, stats.f1_i);
+  document.getElementById('k_f2').innerText = rate(stats.f2_d, stats.f2_i);
+  document.getElementById('k_fb').innerText = rate(stats.fb_d, stats.fb_i);
+}
+
+function editRow(idx, r){
+  showPage('entry');
+  document.getElementById('edit_index').value = idx;
+  document.getElementById('e_date').value = r[0];
+  document.getElementById('e_line').value = r[1];
+  document.getElementById('e_model').value = r[2];
+  document.getElementById('e_input').value = r[3];
+  document.getElementById('e_prep').value = r[6];
+  
+  document.getElementById('defect_wrapper').innerHTML = "";
+  try {
+    let list = JSON.parse(r[7]);
+    list.forEach(d => addDefectRow(d));
+  } catch(e) { addDefectRow(); }
+  calcTotal();
+}
+
+async function delRow(idx){
+  if(!confirm("Delete this record?")) return;
+  document.getElementById('loader').style.display='block';
+  await fetch(API_URL, { method:"POST", body:JSON.stringify({action:"delete", rowIndex:idx}) });
+  location.reload();
+}
+
+// --- REPORT ---
+function genReport(){
+  let date = document.getElementById('r_date').value;
+  if(!date) return alert("Select Date");
+  
+  document.getElementById('print_area').style.display = 'block';
+  document.getElementById('r_subtitle').innerText = "Date: " + date;
+
+  let rData = allData.filter(r => r[0] === date);
+  
+  let totInp=0, totDef=0;
+  let defectsMap = {};
+
+  rData.forEach(r => {
+    totInp += (+r[3]); totDef += (+r[4]);
+    try {
+      let list = JSON.parse(r[7]);
+      list.forEach(d => {
+        let name = d.name || "Unknown";
+        if(!defectsMap[name]) defectsMap[name] = {qty:0, imgs:[], ana:[]};
+        defectsMap[name].qty += (+d.qty);
+        if(d.image && defectsMap[name].imgs.length<3) defectsMap[name].imgs.push(d.image);
+        if(d.analysis) defectsMap[name].ana.push(d.analysis);
+      });
+    } catch(e){}
+  });
+
+  document.getElementById('r_inp').innerText = totInp;
+  document.getElementById('r_def').innerText = totDef;
+  document.getElementById('r_rate_val').innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0%";
+
+  // Chart
+  let chartData = [['Defect', 'Qty']];
+  let sorted = Object.keys(defectsMap).map(k=>({name:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty).slice(0,5);
+  sorted.forEach(s => chartData.push([s.name, s.qty]));
+  
+  if(sorted.length > 0){
+     let chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+     chart.draw(google.visualization.arrayToDataTable(chartData), {title:'Top 5 Defects', is3D:true});
+  } else {
+     document.getElementById('chart_div').innerHTML = "No Defects Found";
+  }
+
+  // Detailed Analysis
+  let html = "";
+  sorted.forEach(s => {
+    let imgs = s.imgs.map(u => `<img src="${u}" class="analysis-img">`).join("");
+    let ana = [...new Set(s.ana)].join(", ");
+    html += `
+      <div class="analysis-item">
+        <div style="flex:1">
+           <h4>${s.name}</h4>
+           <p><b>Qty:</b> ${s.qty}</p>
+           <p><b>Analysis:</b> ${ana}</p>
+        </div>
+        <div>${imgs}</div>
+      </div>
+    `;
+  });
+  document.getElementById('analysis_list').innerHTML = html;
+}
+
+function downloadPDF(){
+  const el = document.getElementById('print_area');
+  html2pdf().set({margin:0.5, filename:'Report.pdf', image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in', format:'letter', orientation:'portrait'}}).from(el).save();
+}
+
+</script>
+</body>
+</html>
