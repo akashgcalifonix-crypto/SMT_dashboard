@@ -49,7 +49,7 @@
   /* Report & Charts */
   .report-box { border: 1px solid #ddd; padding: 30px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
   .chart-row { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
-  .chart-box { flex: 1; min-width: 300px; border: 1px solid #eee; padding: 10px; height: 300px; background: #fff; }
+  .chart-box { flex: 1; min-width: 300px; border: 1px solid #eee; padding: 10px; height: 350px; background: #fff; }
   
   .analysis-item { display: flex; border: 1px solid #eee; padding: 15px; margin-bottom: 10px; gap: 15px; break-inside: avoid; background: #fdfdfd; border-left: 4px solid #007bff; }
   .analysis-img { width: 100px; height: 100px; object-fit: contain; border: 1px solid #eee; background: white; }
@@ -309,7 +309,6 @@
 // ==========================================
 // CONFIGURATION
 // ==========================================
-// ⚠️ REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT URL
 const API_URL = "https://script.google.com/macros/s/AKfycbzkn_YQtnDPW47OTPt9ZlASfj66JMmYdGjbCOvhVL3mwXvfERdtFY761KDqut88dv42FQ/exec";
 
 const DEFECT_MASTER_LIST = ["Body Sensor Fail","Single LED glow","Channel Fail","SMD Component damaged","DUT Mode Fail","Electric sound","Heating","High Current","Enquiry","LED Not glow","LED Miss","Low current","Secondary MIC Fail","Talk MIC Fail","Not On","POGO Pin shift","Software skip","RF Fail","CTC Fail","Speaker Fail","Scrap","Extra Burr","Mic Distortion"];
@@ -610,10 +609,10 @@ function drawDashCharts(modelMap, defectMap, totalInput){
             title: 'Top 5 Models (Qty & Rate)',
             legend: {position: 'none'},
             colors: ['#007bff'],
-            annotations: { alwaysOutside: true, textStyle: { fontSize: 18, bold: true, color: '#000' } }, // BIG FONT
+            annotations: { alwaysOutside: true, textStyle: { fontSize: 14, bold: true, color: '#000' } }, 
             vAxis: { textStyle: {fontSize: 11} },
-            hAxis: { textStyle: {fontSize: 11} },
-            chartArea: {width: '80%', height: '70%'}
+            hAxis: { textStyle: {fontSize: 10}, slantedText:true },
+            chartArea: {width: '80%', height: '65%'}
         };
         new google.visualization.ColumnChart(document.getElementById('dash_chart_model')).draw(data, options);
     } else { document.getElementById('dash_chart_model').innerHTML = "No Data"; }
@@ -636,10 +635,10 @@ function drawDashCharts(modelMap, defectMap, totalInput){
             title: 'Top 5 Defects (Qty & Rate)',
             legend: {position: 'none'},
             colors: ['#dc3545'],
-            annotations: { alwaysOutside: true, textStyle: { fontSize: 18, bold: true, color: '#000' } }, // BIG FONT
+            annotations: { alwaysOutside: true, textStyle: { fontSize: 14, bold: true, color: '#000' } },
             vAxis: { textStyle: {fontSize: 11} },
-            hAxis: { textStyle: {fontSize: 11} },
-            chartArea: {width: '80%', height: '70%'}
+            hAxis: { textStyle: {fontSize: 10}, slantedText:true },
+            chartArea: {width: '80%', height: '65%'}
         };
         new google.visualization.ColumnChart(document.getElementById('dash_chart_defect')).draw(data, options);
     } else { document.getElementById('dash_chart_defect').innerHTML = "No Data"; }
@@ -721,26 +720,8 @@ async function delRow(idx){
 }
 
 // ==========================================
-// REPORTS
+// REPORT LOGIC UPDATED FOR LABELS & SORTING
 // ==========================================
-function genReport(){
-  let start = document.getElementById('r_date_start').value;
-  let end = document.getElementById('r_date_end').value;
-  if(!start) return alert("Select Start Date");
-  if(!end) end = start; 
-  processReportData(start, end, null, 'print_area', 'r_subtitle', 'r_inp', 'r_def', 'r_rate_val', 'trend_chart_div', 'pareto_chart_div', 'analysis_list', 'remaining_list', 'model_chart_div');
-}
-
-function genModelReport(){
-    let start = document.getElementById('m_date_start').value;
-    let end = document.getElementById('m_date_end').value;
-    let model = document.getElementById('m_model_select').value;
-    if(!start || !model) return alert("Select Date and Model");
-    if(!end) end = start;
-    document.getElementById('m_name_disp').innerText = model;
-    processReportData(start, end, model, 'model_print_area', 'm_subtitle', 'm_inp', 'm_def', 'm_rate_val', 'm_trend_chart', 'm_pareto_chart', 'm_analysis_list', 'm_remaining_list', null);
-}
-
 function processReportData(start, end, filterModel, areaId, subId, inpId, defId, rateId, trendId, paretoId, anaId, remId, modelChartId){
   document.getElementById(areaId).style.display = 'block';
   document.getElementById(subId).innerText = `Period: ${start} to ${end}`;
@@ -778,29 +759,61 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   document.getElementById(defId).innerText = totDef;
   document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
 
-  let trendData = [['Date', 'Rate %']];
+  // 1. DATE TREND CHART (With Labels & Responsive Text)
+  let trendData = [['Date', 'Rate %', {role:'annotation'}]];
   Object.keys(dateMap).sort().forEach(dt => {
      let rt = dateMap[dt].i > 0 ? (dateMap[dt].d / dateMap[dt].i * 100) : 0;
-     trendData.push([dt, rt]);
+     trendData.push([dt, rt, rt.toFixed(2)+"%"]);
   });
-  new google.visualization.LineChart(document.getElementById(trendId)).draw(google.visualization.arrayToDataTable(trendData), {title: 'Date-wise Defect Rate Trend', legend:{position:'bottom'}, pointSize:5});
+  new google.visualization.LineChart(document.getElementById(trendId)).draw(google.visualization.arrayToDataTable(trendData), {
+      title: 'Date-wise Defect Rate Trend',
+      legend:{position:'bottom'}, 
+      pointSize:5,
+      chartArea: {width: '85%', height: '70%'},
+      annotations: {textStyle: {fontSize: 10, bold: true}},
+      hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 10 } }
+  });
 
+  // 2. MODEL CHART (Descending Order & Labels & Responsive)
   if(modelChartId){
-      let modelData = [['Model', 'Rate %']];
+      let modelList = [];
       Object.keys(modelMap).forEach(md => {
          let rt = modelMap[md].i > 0 ? (modelMap[md].d / modelMap[md].i * 100) : 0;
-         modelData.push([md, rt]);
+         modelList.push({name: md, rate: rt});
       });
-      new google.visualization.ColumnChart(document.getElementById(modelChartId)).draw(google.visualization.arrayToDataTable(modelData), {title: 'Model Performance', legend:'none'});
+      // SORT DESCENDING
+      modelList.sort((a,b) => b.rate - a.rate);
+
+      let modelData = [['Model', 'Rate %', {role: 'annotation'}]];
+      modelList.forEach(m => {
+          modelData.push([m.name, m.rate, m.rate.toFixed(2)+"%"]);
+      });
+
+      new google.visualization.ColumnChart(document.getElementById(modelChartId)).draw(google.visualization.arrayToDataTable(modelData), {
+          title: 'Model Performance (Desc)', 
+          legend:'none',
+          chartArea: {width: '85%', height: '65%'}, // Increased bottom margin
+          annotations: {textStyle: {fontSize: 10, bold: true}},
+          hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 10 } }
+      });
   }
 
+  // 3. PARETO CHART (With Labels & Responsive)
   let sortedDefects = Object.keys(defectsMap).map(k=>({name:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty);
-  let paretoData = [['Defect', 'Qty']];
-  sortedDefects.forEach(s => paretoData.push([s.name, s.qty]));
+  let paretoData = [['Defect', 'Qty', {role:'annotation'}]];
+  sortedDefects.forEach(s => paretoData.push([s.name, s.qty, s.qty]));
+  
   if(sortedDefects.length > 0){
-      new google.visualization.ColumnChart(document.getElementById(paretoId)).draw(google.visualization.arrayToDataTable(paretoData), {title: 'Pareto Analysis', legend:'none'});
+      new google.visualization.ColumnChart(document.getElementById(paretoId)).draw(google.visualization.arrayToDataTable(paretoData), {
+          title: 'Pareto Analysis', 
+          legend:'none',
+          chartArea: {width: '85%', height: '65%'},
+          annotations: {textStyle: {fontSize: 10, bold: true}},
+          hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 10 } }
+      });
   }
 
+  // --- Top 5 & Remaining List ---
   let top5 = sortedDefects.slice(0, 5);
   let remaining = sortedDefects.slice(5);
 
@@ -825,16 +838,15 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
 
 function downloadPDF(elementId, fileName){
   const el = document.getElementById(elementId);
-  html2pdf().set({margin:0.2, filename:fileName, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2}, jsPDF:{unit:'in', format:'letter', orientation:'portrait'}}).from(el).save();
-}
-
-function downloadExcel() {
-    let table = document.getElementById("excel_table");
-    let html = table.outerHTML.replace(/ /g, '%20');
-    let a = document.createElement('a');
-    a.href = 'data:application/vnd.ms-excel,' + html;
-    a.download = 'Model_Defect_Report.xls';
-    a.click();
+  // Auto-fitting scale
+  let opt = {
+    margin: 0.2,
+    filename: fileName,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(el).save();
 }
 </script>
 </body>
