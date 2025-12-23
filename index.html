@@ -161,7 +161,7 @@
        <div class="kpi-card" style="border-bottom-color:#6f42c1;"><div>Basement</div><div class="kpi-val" id="k_fb">0%</div></div>
     </div>
 
-    <!-- NEW DASHBOARD CHARTS SECTION -->
+    <!-- DASHBOARD CHARTS SECTION -->
     <div class="chart-row">
         <div class="chart-box" id="dash_chart_model" style="height:350px;"></div>
         <div class="chart-box" id="dash_chart_defect" style="height:350px;"></div>
@@ -216,7 +216,7 @@
     </div>
 
     <div id="print_area" class="report-box">
-      <!-- Report Header with Logo -->
+      <!-- Report Header -->
       <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
           <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;">
           <div style="text-align:right;">
@@ -309,6 +309,7 @@
 // ==========================================
 // CONFIGURATION
 // ==========================================
+// ⚠️ REPLACE THIS WITH YOUR GOOGLE APPS SCRIPT URL
 const API_URL = "https://script.google.com/macros/s/AKfycbzkn_YQtnDPW47OTPt9ZlASfj66JMmYdGjbCOvhVL3mwXvfERdtFY761KDqut88dv42FQ/exec";
 
 const DEFECT_MASTER_LIST = ["Body Sensor Fail","Single LED glow","Channel Fail","SMD Component damaged","DUT Mode Fail","Electric sound","Heating","High Current","Enquiry","LED Not glow","LED Miss","Low current","Secondary MIC Fail","Talk MIC Fail","Not On","POGO Pin shift","Software skip","RF Fail","CTC Fail","Speaker Fail","Scrap","Extra Burr","Mic Distortion"];
@@ -402,7 +403,7 @@ function calcTotal(){
   });
 }
 
-// --- NEW COMPACT PREVIEW FUNCTION (BIGGER FONT 1.5x) ---
+// --- NEW COMPACT PREVIEW (BIG FONT) ---
 function previewEntry() {
     let data = {
         date: document.getElementById('e_date').value,
@@ -426,7 +427,6 @@ function previewEntry() {
         });
     });
 
-    // FONT INCREASED TO 16px (WRAPPER) and 14px (TABLE)
     let html = `
         <div style="font-size:16px;">
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
@@ -537,17 +537,14 @@ function populateModelDropdown(){
     sel.innerHTML = '<option value="">Select Model</option>' + models.map(m => `<option value="${m}">${m}</option>`).join("");
 }
 
-// UPDATED RENDER FUNCTION WITH CHARTS
+// DASHBOARD RENDER
 function renderDash(){
   let from = document.getElementById('dash_from').value;
   let to = document.getElementById('dash_to').value || from;
   let tBody = document.getElementById('dash_table');
   tBody.innerHTML = "";
   let stats = { all_i:0, all_d:0, f1_i:0, f1_d:0, f2_i:0, f2_d:0, fb_i:0, fb_d:0 };
-
-  // DATA MAPS FOR CHARTS
-  let modelMap = {};
-  let defectMap = {};
+  let modelMap = {}, defectMap = {};
 
   allData.forEach((r, idx) => {
     if(r[0] < from || r[0] > to) return;
@@ -559,7 +556,6 @@ function renderDash(){
     else if(line<=16) { stats.f2_i+=inp; stats.f2_d+=def; }
     else { stats.fb_i+=inp; stats.fb_d+=def; }
 
-    // AGGREGATE FOR CHARTS (Now also collecting Input for accurate Rate %)
     if(!modelMap[model]) modelMap[model] = {def:0, inp:0};
     modelMap[model].def += def;
     modelMap[model].inp += inp;
@@ -585,71 +581,55 @@ function renderDash(){
   document.getElementById('k_f2').innerText = rate(stats.f2_d, stats.f2_i);
   document.getElementById('k_fb').innerText = rate(stats.fb_d, stats.fb_i);
 
-  // DRAW DASHBOARD CHARTS with Total Input context
   drawDashCharts(modelMap, defectMap, stats.all_i);
 }
 
 function drawDashCharts(modelMap, defectMap, totalInput){
-    // 1. TOP MODELS
     let modelArr = [['Model', 'Defects', { role: 'annotation' }]];
-    // Sort by defect count
     let sortedModels = Object.keys(modelMap).sort((a,b)=>modelMap[b].def - modelMap[a].def).slice(0, 5);
     
     sortedModels.forEach(m => {
         let mData = modelMap[m];
         let rate = mData.inp > 0 ? (mData.def / mData.inp * 100).toFixed(2) + "%" : "0%";
-        // LABEL WITH QTY AND RATE
-        let label = `${mData.def}\n(${rate})`;
-        modelArr.push([m, mData.def, label]);
+        modelArr.push([m, mData.def, `${mData.def}\n(${rate})`]);
     });
 
     if(sortedModels.length > 0 && google.visualization){
         let data = google.visualization.arrayToDataTable(modelArr);
-        let options = {
-            title: 'Top 5 Models (Qty & Rate)',
-            legend: {position: 'none'},
-            colors: ['#007bff'],
-            annotations: { alwaysOutside: true, textStyle: { fontSize: 14, bold: true, color: '#000' } }, 
-            vAxis: { textStyle: {fontSize: 11} },
-            hAxis: { textStyle: {fontSize: 10}, slantedText:true },
-            chartArea: {width: '80%', height: '65%'}
-        };
-        new google.visualization.ColumnChart(document.getElementById('dash_chart_model')).draw(data, options);
-    } else { document.getElementById('dash_chart_model').innerHTML = "No Data"; }
+        new google.visualization.ColumnChart(document.getElementById('dash_chart_model')).draw(data, {
+            title: 'Top 5 Models', legend: 'none', colors: ['#007bff'],
+            annotations: { alwaysOutside: true, textStyle: { fontSize: 14, bold: true } },
+            vAxis: { textStyle: {fontSize: 11}, viewWindow: {min:0} },
+            hAxis: { textStyle: {fontSize: 10} },
+            chartArea: {width: '85%', height: '65%'}
+        });
+    }
 
-    // 2. TOP 5 DEFECTS
     let defectArr = [['Defect', 'Qty', { role: 'annotation' }]];
     let sortedDefects = Object.keys(defectMap).sort((a,b)=>defectMap[b]-defectMap[a]).slice(0, 5);
     
     sortedDefects.forEach(d => {
         let qty = defectMap[d];
         let rate = totalInput > 0 ? (qty / totalInput * 100).toFixed(2) + "%" : "0%";
-        // LABEL WITH QTY AND RATE
-        let label = `${qty}\n(${rate})`;
-        defectArr.push([d, qty, label]);
+        defectArr.push([d, qty, `${qty}\n(${rate})`]);
     });
 
     if(sortedDefects.length > 0 && google.visualization){
         let data = google.visualization.arrayToDataTable(defectArr);
-        let options = {
-            title: 'Top 5 Defects (Qty & Rate)',
-            legend: {position: 'none'},
-            colors: ['#dc3545'],
-            annotations: { alwaysOutside: true, textStyle: { fontSize: 14, bold: true, color: '#000' } },
-            vAxis: { textStyle: {fontSize: 11} },
-            hAxis: { textStyle: {fontSize: 10}, slantedText:true },
-            chartArea: {width: '80%', height: '65%'}
-        };
-        new google.visualization.ColumnChart(document.getElementById('dash_chart_defect')).draw(data, options);
-    } else { document.getElementById('dash_chart_defect').innerHTML = "No Data"; }
+        new google.visualization.ColumnChart(document.getElementById('dash_chart_defect')).draw(data, {
+            title: 'Top 5 Defects', legend: 'none', colors: ['#dc3545'],
+            annotations: { alwaysOutside: true, textStyle: { fontSize: 14, bold: true } },
+            vAxis: { textStyle: {fontSize: 11}, viewWindow: {min:0} },
+            hAxis: { textStyle: {fontSize: 10} },
+            chartArea: {width: '85%', height: '65%'}
+        });
+    }
 }
 
-// --- PREVIEW FROM DASHBOARD (USING NEW COMPACT STYLE WITH BIGGER FONTS) ---
 function previewEntryFromRow(idx, r){
     let data = { date: r[0], line: r[1], model: r[2], input: r[3], total: r[4], rate: formatPct(r[5]), prep: r[6] };
     let list = []; try{list=JSON.parse(r[7])}catch(e){}
     
-    // BIGGER FONTS (1.5x)
     let html = `
         <div style="font-size:16px;">
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
@@ -658,38 +638,23 @@ function previewEntryFromRow(idx, r){
                 <div class="info-box" style="padding:5px;"><span>Model</span><strong style="font-size:16px;">${data.model}</strong></div>
                 <div class="info-box" style="padding:5px;"><span>By</span><strong style="font-size:16px;">${data.prep}</strong></div>
             </div>
-
             <div class="summary-sec" style="padding:8px; margin-bottom:10px;">
                 <div class="sum-item"><div class="sum-lbl" style="font-size:12px;">Input</div><div class="sum-val" style="font-size:18px;">${data.input}</div></div>
                 <div class="sum-item"><div class="sum-lbl" style="font-size:12px;">Defect</div><div class="sum-val text-danger" style="font-size:18px;">${data.total}</div></div>
                 <div class="sum-item"><div class="sum-lbl" style="font-size:12px;">Rate %</div><div class="sum-val" style="font-size:18px; color:${parseFloat(data.rate)>1 ? 'red':'green'}">${data.rate}</div></div>
             </div>
-
             <h4 style="color:#003366; margin:5px 0; font-size:14px; border-bottom:1px solid #ccc;">Defect Breakdown</h4>
-            
             <div style="overflow:visible;">
                 <table class="prev-table" style="font-size:14px; width:100%;">
-                    <thead>
-                        <tr style="background:#eee; color:#000;">
-                            <th style="padding:4px;">Defect</th>
-                            <th style="padding:4px;">Qty</th>
-                            <th style="padding:4px;">%</th>
-                            <th style="padding:4px;">Analysis</th>
-                            <th style="padding:4px;">Img</th>
-                        </tr>
-                    </thead>
+                    <thead><tr style="background:#eee; color:#000;"><th style="padding:4px;">Defect</th><th style="padding:4px;">Qty</th><th style="padding:4px;">%</th><th style="padding:4px;">Analysis</th><th style="padding:4px;">Img</th></tr></thead>
                     <tbody>
     `;
-    if(list.length === 0) {
-        html += `<tr><td colspan="5" style="text-align:center;">No Defects</td></tr>`;
-    } else {
-        list.forEach(d => {
-            let imgTag = d.image ? `<img src="${d.image}" style="height:35px; border:1px solid #ccc;" onclick="window.open(this.src)">` : '-';
-            html += `<tr><td><b>${d.name}</b></td><td>${d.qty}</td><td>${formatPct(d.rate||0)}</td><td>${d.analysis}</td><td style="text-align:center;">${imgTag}</td></tr>`;
-        });
-    }
+    if(list.length === 0) html += `<tr><td colspan="5" style="text-align:center;">No Defects</td></tr>`;
+    else list.forEach(d => {
+        let imgTag = d.image ? `<img src="${d.image}" style="height:35px; border:1px solid #ccc;" onclick="window.open(this.src)">` : '-';
+        html += `<tr><td><b>${d.name}</b></td><td>${d.qty}</td><td>${formatPct(d.rate||0)}</td><td>${d.analysis}</td><td style="text-align:center;">${imgTag}</td></tr>`;
+    });
     html += `</tbody></table></div></div>`;
-    
     document.getElementById('previewBody').style.padding = "10px";
     document.getElementById('previewBody').innerHTML = html;
     document.getElementById('previewFooter').innerHTML = `<button class="btn-gray" onclick="closeModal()">Close</button>`;
@@ -705,10 +670,7 @@ function editRow(idx, r){
   document.getElementById('e_input').value = r[3];
   document.getElementById('e_prep').value = r[6];
   document.getElementById('defect_wrapper').innerHTML = "";
-  try {
-    let list = JSON.parse(r[7]);
-    list.forEach(d => addDefectRow(d));
-  } catch(e) { addDefectRow(); }
+  try { JSON.parse(r[7]).forEach(d => addDefectRow(d)); } catch(e) { addDefectRow(); }
   calcTotal();
 }
 
@@ -720,14 +682,34 @@ async function delRow(idx){
 }
 
 // ==========================================
-// REPORT LOGIC UPDATED FOR LABELS & SORTING
+// REPORTS GENERATION (FIXED)
 // ==========================================
+function genReport(){
+  if(!allData || allData.length === 0) { alert("Data not loaded yet!"); return; }
+  let start = document.getElementById('r_date_start').value;
+  let end = document.getElementById('r_date_end').value;
+  if(!start) return alert("Select Start Date");
+  if(!end) end = start; 
+  processReportData(start, end, null, 'print_area', 'r_subtitle', 'r_inp', 'r_def', 'r_rate_val', 'trend_chart_div', 'pareto_chart_div', 'analysis_list', 'remaining_list', 'model_chart_div');
+}
+
+function genModelReport(){
+    if(!allData || allData.length === 0) { alert("Data not loaded yet!"); return; }
+    let start = document.getElementById('m_date_start').value;
+    let end = document.getElementById('m_date_end').value;
+    let model = document.getElementById('m_model_select').value;
+    if(!start || !model) return alert("Select Date and Model");
+    if(!end) end = start;
+    document.getElementById('m_name_disp').innerText = model;
+    processReportData(start, end, model, 'model_print_area', 'm_subtitle', 'm_inp', 'm_def', 'm_rate_val', 'm_trend_chart', 'm_pareto_chart', 'm_analysis_list', 'm_remaining_list', null);
+}
+
 function processReportData(start, end, filterModel, areaId, subId, inpId, defId, rateId, trendId, paretoId, anaId, remId, modelChartId){
   document.getElementById(areaId).style.display = 'block';
   document.getElementById(subId).innerText = `Period: ${start} to ${end}`;
   let rData = allData.filter(r => r[0] >= start && r[0] <= end);
   if(filterModel) rData = rData.filter(r => r[2] === filterModel);
-  if(rData.length === 0) { alert("No data"); document.getElementById(areaId).style.display = 'none'; return; }
+  if(rData.length === 0) { alert("No data found for this period."); document.getElementById(areaId).style.display = 'none'; return; }
 
   let totInp=0, totDef=0;
   let dateMap = {}, modelMap = {}, defectsMap = {};
@@ -759,94 +741,87 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   document.getElementById(defId).innerText = totDef;
   document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
 
-  // 1. DATE TREND CHART (With Labels & Responsive Text)
-  let trendData = [['Date', 'Rate %', {role:'annotation'}]];
-  Object.keys(dateMap).sort().forEach(dt => {
-     let rt = dateMap[dt].i > 0 ? (dateMap[dt].d / dateMap[dt].i * 100) : 0;
-     trendData.push([dt, rt, rt.toFixed(2)+"%"]);
-  });
-  new google.visualization.LineChart(document.getElementById(trendId)).draw(google.visualization.arrayToDataTable(trendData), {
-      title: 'Date-wise Defect Rate Trend',
-      legend:{position:'bottom'}, 
-      pointSize:5,
-      chartArea: {width: '85%', height: '70%'},
-      annotations: {textStyle: {fontSize: 10, bold: true}},
-      hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 10 } }
-  });
-
-  // 2. MODEL CHART (Descending Order & Labels & Responsive)
-  if(modelChartId){
-      let modelList = [];
-      Object.keys(modelMap).forEach(md => {
-         let rt = modelMap[md].i > 0 ? (modelMap[md].d / modelMap[md].i * 100) : 0;
-         modelList.push({name: md, rate: rt});
+  // CHART 1: TREND
+  try {
+      let trendData = [['Date', 'Rate %', {role:'annotation'}]];
+      Object.keys(dateMap).sort().forEach(dt => {
+         let rt = dateMap[dt].i > 0 ? (dateMap[dt].d / dateMap[dt].i * 100) : 0;
+         trendData.push([dt, rt, rt.toFixed(2)+"%"]);
       });
-      // SORT DESCENDING
-      modelList.sort((a,b) => b.rate - a.rate);
-
-      let modelData = [['Model', 'Rate %', {role: 'annotation'}]];
-      modelList.forEach(m => {
-          modelData.push([m.name, m.rate, m.rate.toFixed(2)+"%"]);
-      });
-
-      new google.visualization.ColumnChart(document.getElementById(modelChartId)).draw(google.visualization.arrayToDataTable(modelData), {
-          title: 'Model Performance (Desc)', 
-          legend:'none',
-          chartArea: {width: '85%', height: '65%'}, // Increased bottom margin
-          annotations: {textStyle: {fontSize: 10, bold: true}},
-          hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 10 } }
-      });
-  }
-
-  // 3. PARETO CHART (With Labels & Responsive)
-  let sortedDefects = Object.keys(defectsMap).map(k=>({name:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty);
-  let paretoData = [['Defect', 'Qty', {role:'annotation'}]];
-  sortedDefects.forEach(s => paretoData.push([s.name, s.qty, s.qty]));
-  
-  if(sortedDefects.length > 0){
-      new google.visualization.ColumnChart(document.getElementById(paretoId)).draw(google.visualization.arrayToDataTable(paretoData), {
-          title: 'Pareto Analysis', 
-          legend:'none',
+      new google.visualization.LineChart(document.getElementById(trendId)).draw(google.visualization.arrayToDataTable(trendData), {
+          title: 'Defect Trend', legend: 'bottom', pointSize:5,
           chartArea: {width: '85%', height: '65%'},
           annotations: {textStyle: {fontSize: 10, bold: true}},
           hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 10 } }
       });
+  } catch(e) { console.log(e); }
+
+  // CHART 2: MODEL (Sorted Descending)
+  if(modelChartId){
+      try {
+          let modelList = [];
+          Object.keys(modelMap).forEach(md => {
+             let rt = modelMap[md].i > 0 ? (modelMap[md].d / modelMap[md].i * 100) : 0;
+             modelList.push({name: md, rate: rt});
+          });
+          modelList.sort((a,b) => b.rate - a.rate);
+
+          let modelData = [['Model', 'Rate %', {role: 'annotation'}]];
+          modelList.forEach(m => modelData.push([m.name, m.rate, m.rate.toFixed(2)+"%"]));
+
+          new google.visualization.ColumnChart(document.getElementById(modelChartId)).draw(google.visualization.arrayToDataTable(modelData), {
+              title: 'Model Performance (Worst to Best)', legend: 'none',
+              chartArea: {width: '85%', height: '60%'},
+              annotations: {alwaysOutside: true, textStyle: {fontSize: 10, bold: true}},
+              hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 10 } },
+              vAxis: { viewWindow: {min:0} }
+          });
+      } catch(e) { console.log(e); }
   }
 
-  // --- Top 5 & Remaining List ---
-  let top5 = sortedDefects.slice(0, 5);
-  let remaining = sortedDefects.slice(5);
+  // CHART 3: PARETO
+  try {
+      let sortedDefects = Object.keys(defectsMap).map(k=>({name:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty);
+      let paretoData = [['Defect', 'Qty', {role:'annotation'}]];
+      sortedDefects.forEach(s => paretoData.push([s.name, s.qty, s.qty]));
+      
+      if(sortedDefects.length > 0){
+          new google.visualization.ColumnChart(document.getElementById(paretoId)).draw(google.visualization.arrayToDataTable(paretoData), {
+              title: 'Pareto Analysis', legend:'none',
+              chartArea: {width: '85%', height: '60%'},
+              annotations: {alwaysOutside: true, textStyle: {fontSize: 10, bold: true}},
+              hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 10 } },
+              vAxis: { viewWindow: {min:0} }
+          });
+      }
 
-  let html = "";
-  top5.forEach(s => {
-    let imgs = s.imgs.map(u => `<img src="${u}" class="analysis-img">`).join("");
-    let ana = s.ana.join(", ");
-    let defRate = totInp > 0 ? (s.qty / totInp * 100).toFixed(2) + "%" : "0.00%";
-    html += `<div class="analysis-item"><div style="flex:2"><h4 style="margin:0; color:#0056b3;">${s.name}</h4><div style="display:flex; gap:15px; font-size:12px; margin:5px 0;"><span><b>Qty:</b> ${s.qty}</span><span><b>Rate:</b> ${defRate}</span></div><p style="font-size:12px; background:#f9f9f9; padding:5px; border-left:3px solid orange;"><b>Analysis:</b> ${ana || 'No analysis'}</p></div><div style="flex:1; text-align:right;">${imgs}</div></div>`;
-  });
-  document.getElementById(anaId).innerHTML = html;
+      // LISTS
+      let top5 = sortedDefects.slice(0, 5);
+      let remaining = sortedDefects.slice(5);
+      let html = "";
+      top5.forEach(s => {
+        let imgs = s.imgs.map(u => `<img src="${u}" class="analysis-img">`).join("");
+        let defRate = totInp > 0 ? (s.qty / totInp * 100).toFixed(2) + "%" : "0.00%";
+        html += `<div class="analysis-item"><div style="flex:2"><h4 style="margin:0; color:#0056b3;">${s.name}</h4><div style="display:flex; gap:15px; font-size:12px; margin:5px 0;"><span><b>Qty:</b> ${s.qty}</span><span><b>Rate:</b> ${defRate}</span></div><p style="font-size:12px; background:#f9f9f9; padding:5px; border-left:3px solid orange;"><b>Analysis:</b> ${s.ana.join(", ") || 'No analysis'}</p></div><div style="flex:1; text-align:right;">${imgs}</div></div>`;
+      });
+      document.getElementById(anaId).innerHTML = html;
 
-  let remHtml = "";
-  if(remaining.length > 0) {
-      remaining.forEach(r => {
+      let remHtml = "";
+      if(remaining.length > 0) remaining.forEach(r => {
           let rt = totInp > 0 ? (r.qty / totInp * 100).toFixed(2) + "%" : "0.00%";
           remHtml += `<tr><td>${r.name}</td><td>${r.qty}</td><td>${rt}</td></tr>`;
       });
-  } else { remHtml = "<tr><td colspan='3'>No other defects</td></tr>"; }
-  document.getElementById(remId).innerHTML = remHtml;
+      else remHtml = "<tr><td colspan='3'>No other defects</td></tr>";
+      document.getElementById(remId).innerHTML = remHtml;
+  } catch(e) { console.log(e); }
 }
 
 function downloadPDF(elementId, fileName){
   const el = document.getElementById(elementId);
-  // Auto-fitting scale
-  let opt = {
-    margin: 0.2,
-    filename: fileName,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-  };
-  html2pdf().set(opt).from(el).save();
+  html2pdf().set({
+      margin: 0.2, filename: fileName, image: {type:'jpeg',quality:0.98}, 
+      html2canvas: {scale: 2, useCORS: true}, jsPDF: {unit:'in', format:'letter', orientation:'portrait'}
+  }).from(el).save();
 }
 </script>
 </body>
