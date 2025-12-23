@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SMT Dashboard</title>
+<title>SMT Master Dashboard</title>
 <script src="https://www.gstatic.com/charts/loader.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -49,21 +49,18 @@
   /* Report & Charts */
   .report-box { border: 1px solid #ddd; padding: 30px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
   
-  /* --- CRITICAL CSS FOR PDF PAGE BREAKS --- */
+  /* STACKED CHARTS FOR REPORT - PAGE BREAK LOGIC */
   .chart-stacked { 
       display: block; 
       width: 100%; 
       margin-bottom: 30px; 
-      /* These properties force the PDF engine to NOT cut the div */
       page-break-inside: avoid !important; 
       break-inside: avoid !important; 
-      -webkit-column-break-inside: avoid; 
   }
   
-  /* Increased height for better label visibility */
   .chart-full { width: 100%; height: 350px; border: 1px solid #eee; padding: 10px; background: #fff; }
   
-  /* Dashboard Charts (Side by Side) */
+  /* Dashboard Charts */
   .chart-row { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
   .chart-box { flex: 1; min-width: 300px; border: 1px solid #eee; padding: 10px; background: #fff; }
 
@@ -73,10 +70,9 @@
   .edit-ana-btn { background: none; border: none; color: #007bff; font-weight: bold; cursor: pointer; margin-left: 10px; font-size: 14px; text-decoration: underline; }
   
   .rem-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+  .rem-table tr { page-break-inside: avoid; break-inside: avoid; }
   .rem-table th, .rem-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
   .rem-table th { background: #343a40; color: white; }
-  /* Avoid breaking inside table rows */
-  .rem-table tr { page-break-inside: avoid; break-inside: avoid; }
 
   /* --- PREVIEW MODAL --- */
   .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
@@ -114,7 +110,7 @@
 <div class="main-header">
     <img src="https://i.postimg.cc/5y7SN4xc/logo.png" class="main-logo" alt="Logo">
     <div class="main-title">
-        <h2>SMT Dashboard</h2>
+        <h2>SMT Master Dashboard</h2>
         <p>Production Quality Control System</p>
     </div>
 </div>
@@ -447,7 +443,7 @@ function previewEntry() {
     `;
     if(data.defects.length === 0) html += `<tr><td colspan="5" style="text-align:center; color:#999;">No Defects Recorded</td></tr>`;
     else data.defects.forEach(d => {
-        let imgTag = d.img ? `<img src="${d.img}" style="height:35px; border:1px solid #ccc;">` : '-';
+        let imgTag = d.img ? `<img src="${d.img}" style="height:35px; border:1px solid #ccc;" onclick="window.open(this.src)">` : '-';
         html += `<tr><td><b>${d.name}</b></td><td>${d.qty}</td><td>${d.rate}</td><td style="padding:4px; color:#555;">${d.ana || '-'}</td><td style="padding:4px; text-align:center;">${imgTag}</td></tr>`;
     });
     html += `</tbody></table></div></div>`;
@@ -731,7 +727,7 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   // CHART OPTIONS - ADJUSTED FOR PDF SAFETY
   let commonOptions = {
      legend: 'none',
-     chartArea: { left: 60, top: 40, width: '85%', height: '50%' }, // Reduced height to prevent label clipping
+     chartArea: { left: 60, top: 40, width: '90%', height: '60%' }, 
      annotations: { alwaysOutside: true, textStyle: { fontSize: 11, bold: true, color: 'black' } },
      hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 11 } },
      vAxis: { viewWindow: {min:0} }
@@ -808,7 +804,7 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   } catch(e) {}
 }
 
-// --- UPDATED PDF DOWNLOAD FUNCTION TO FIX CUT-OFF & PAGE BREAKS ---
+// --- UPDATED PDF DOWNLOAD FUNCTION FOR LANDSCAPE MODE ---
 function downloadPDF(elementId, fileName){
   const el = document.getElementById(elementId);
   
@@ -816,12 +812,12 @@ function downloadPDF(elementId, fileName){
   buttons.forEach(b => b.style.display = 'none');
 
   let opt = {
-    margin:       [0.5, 0.2, 0.5, 0.2], // Margin: Top, Left, Bottom, Right (Increased T/B to avoid cut)
+    margin:       [0.3, 0.3, 0.3, 0.3], // Reduced margins slightly for landscape
     filename:     fileName,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
-    jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // THIS PREVENTS SPLITTING
+    jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, // CHANGED TO LANDSCAPE
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   html2pdf().set(opt).from(el).save().then(() => {
@@ -831,4 +827,3 @@ function downloadPDF(elementId, fileName){
 </script>
 </body>
 </html>
-
