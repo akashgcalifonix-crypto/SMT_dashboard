@@ -397,7 +397,7 @@ function calcTotal(){
   });
 }
 
-// --- NEW ATTRACTIVE PREVIEW FUNCTION ---
+// --- NEW COMPACT PREVIEW FUNCTION ---
 function previewEntry() {
     let data = {
         date: document.getElementById('e_date').value,
@@ -421,47 +421,58 @@ function previewEntry() {
         });
     });
 
-    // --- GENERATE PROFESSIONAL HTML ---
+    // GENERATE COMPACT HTML (NO SCROLL, SMALLER FONTS)
     let html = `
-        <div class="info-group">
-            <div class="info-box"><span>Date</span><strong>${data.date}</strong></div>
-            <div class="info-box"><span>Line No</span><strong>${data.line}</strong></div>
-            <div class="info-box"><span>Model</span><strong>${data.model}</strong></div>
-            <div class="info-box"><span>Prepared By</span><strong>${data.prep}</strong></div>
-        </div>
+        <div style="font-size:11px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
+                <div class="info-box" style="padding:5px;"><span>Date</span><strong style="font-size:12px;">${data.date}</strong></div>
+                <div class="info-box" style="padding:5px;"><span>Line</span><strong style="font-size:12px;">${data.line}</strong></div>
+                <div class="info-box" style="padding:5px;"><span>Model</span><strong style="font-size:12px;">${data.model}</strong></div>
+                <div class="info-box" style="padding:5px;"><span>By</span><strong style="font-size:12px;">${data.prep}</strong></div>
+            </div>
 
-        <div class="summary-sec">
-            <div class="sum-item"><div class="sum-lbl">Input Qty</div><div class="sum-val">${data.input}</div></div>
-            <div class="sum-item"><div class="sum-lbl">Defect Qty</div><div class="sum-val text-danger">${data.total}</div></div>
-            <div class="sum-item"><div class="sum-lbl">Rejection Rate</div><div class="sum-val" style="color:${parseFloat(data.rate)>1 ? 'red':'green'}">${data.rate}</div></div>
-        </div>
+            <div class="summary-sec" style="padding:8px; margin-bottom:10px;">
+                <div class="sum-item"><div class="sum-lbl">Input</div><div class="sum-val" style="font-size:14px;">${data.input}</div></div>
+                <div class="sum-item"><div class="sum-lbl">Defect</div><div class="sum-val text-danger" style="font-size:14px;">${data.total}</div></div>
+                <div class="sum-item"><div class="sum-lbl">Rate %</div><div class="sum-val" style="font-size:14px; color:${parseFloat(data.rate)>1 ? 'red':'green'}">${data.rate}</div></div>
+            </div>
 
-        <h4 style="color:#003366; margin-bottom:10px;">Defect Breakdown</h4>
-        <div style="max-height:300px; overflow-y:auto;">
-            <table class="prev-table">
-                <thead><tr><th>Defect Name</th><th>Qty</th><th>%</th><th>Analysis</th><th>Proof</th></tr></thead>
-                <tbody>
+            <h4 style="color:#003366; margin:5px 0; font-size:12px; border-bottom:1px solid #ccc;">Defect Breakdown</h4>
+            
+            <div style="overflow:visible;"> 
+                <table class="prev-table" style="font-size:10px; width:100%;">
+                    <thead>
+                        <tr style="background:#eee; color:#000;">
+                            <th style="padding:4px;">Defect</th>
+                            <th style="padding:4px;">Qty</th>
+                            <th style="padding:4px;">%</th>
+                            <th style="padding:4px;">Analysis</th>
+                            <th style="padding:4px;">Img</th>
+                        </tr>
+                    </thead>
+                    <tbody>
     `;
     
     if(data.defects.length === 0) {
         html += `<tr><td colspan="5" style="text-align:center; color:#999;">No Defects Recorded</td></tr>`;
     } else {
         data.defects.forEach(d => {
-            let imgTag = d.img ? `<img src="${d.img}" class="prev-img" onclick="window.open(this.src)">` : '<span style="color:#ccc">-</span>';
+            let imgTag = d.img ? `<img src="${d.img}" style="height:25px; border:1px solid #ccc;">` : '-';
             html += `<tr>
-                <td><b>${d.name}</b></td>
-                <td>${d.qty}</td>
-                <td>${d.rate}</td>
-                <td style="font-size:12px; color:#555;">${d.ana || '-'}</td>
-                <td style="text-align:center;">${imgTag}</td>
+                <td style="padding:4px;"><b>${d.name}</b></td>
+                <td style="padding:4px;">${d.qty}</td>
+                <td style="padding:4px;">${d.rate}</td>
+                <td style="padding:4px; color:#555;">${d.ana || '-'}</td>
+                <td style="padding:4px; text-align:center;">${imgTag}</td>
             </tr>`;
         });
     }
     
-    html += `</tbody></table></div>`;
+    html += `</tbody></table></div></div>`;
 
+    document.getElementById('previewBody').style.padding = "10px";
     document.getElementById('previewBody').innerHTML = html;
-    document.getElementById('previewFooter').innerHTML = `<button class="btn-gray" onclick="closeModal()">Back to Edit</button><button class="btn-green" onclick="saveData()">✅ Confirm & Submit</button>`;
+    document.getElementById('previewFooter').innerHTML = `<button class="btn-gray" onclick="closeModal()">Back</button><button class="btn-green" onclick="saveData()">✅ Submit</button>`;
     document.getElementById('previewModal').style.display = "block";
 }
 
@@ -550,44 +561,54 @@ function renderDash(){
   document.getElementById('k_fb').innerText = rate(stats.fb_d, stats.fb_i);
 }
 
-// --- PREVIEW FROM DASHBOARD (USING NEW STYLE) ---
+// --- PREVIEW FROM DASHBOARD (USING NEW COMPACT STYLE) ---
 function previewEntryFromRow(idx, r){
     let data = { date: r[0], line: r[1], model: r[2], input: r[3], total: r[4], rate: formatPct(r[5]), prep: r[6] };
     let list = []; try{list=JSON.parse(r[7])}catch(e){}
     
-    // REUSING THE SAME PROFESSIONAL HTML STRUCTURE
     let html = `
-        <div class="info-group">
-            <div class="info-box"><span>Date</span><strong>${data.date}</strong></div>
-            <div class="info-box"><span>Line No</span><strong>${data.line}</strong></div>
-            <div class="info-box"><span>Model</span><strong>${data.model}</strong></div>
-            <div class="info-box"><span>Prepared By</span><strong>${data.prep}</strong></div>
-        </div>
+        <div style="font-size:11px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
+                <div class="info-box" style="padding:5px;"><span>Date</span><strong style="font-size:12px;">${data.date}</strong></div>
+                <div class="info-box" style="padding:5px;"><span>Line</span><strong style="font-size:12px;">${data.line}</strong></div>
+                <div class="info-box" style="padding:5px;"><span>Model</span><strong style="font-size:12px;">${data.model}</strong></div>
+                <div class="info-box" style="padding:5px;"><span>By</span><strong style="font-size:12px;">${data.prep}</strong></div>
+            </div>
 
-        <div class="summary-sec">
-            <div class="sum-item"><div class="sum-lbl">Input Qty</div><div class="sum-val">${data.input}</div></div>
-            <div class="sum-item"><div class="sum-lbl">Defect Qty</div><div class="sum-val text-danger">${data.total}</div></div>
-            <div class="sum-item"><div class="sum-lbl">Rejection Rate</div><div class="sum-val" style="color:${parseFloat(data.rate)>1 ? 'red':'green'}">${data.rate}</div></div>
-        </div>
+            <div class="summary-sec" style="padding:8px; margin-bottom:10px;">
+                <div class="sum-item"><div class="sum-lbl">Input</div><div class="sum-val" style="font-size:14px;">${data.input}</div></div>
+                <div class="sum-item"><div class="sum-lbl">Defect</div><div class="sum-val text-danger" style="font-size:14px;">${data.total}</div></div>
+                <div class="sum-item"><div class="sum-lbl">Rate %</div><div class="sum-val" style="font-size:14px; color:${parseFloat(data.rate)>1 ? 'red':'green'}">${data.rate}</div></div>
+            </div>
 
-        <h4 style="color:#003366; margin-bottom:10px;">Defect Breakdown</h4>
-        <div style="max-height:300px; overflow-y:auto;">
-            <table class="prev-table">
-                <thead><tr><th>Defect Name</th><th>Qty</th><th>%</th><th>Analysis</th><th>Proof</th></tr></thead>
-                <tbody>
+            <h4 style="color:#003366; margin:5px 0; font-size:12px; border-bottom:1px solid #ccc;">Defect Breakdown</h4>
+            
+            <div style="overflow:visible;">
+                <table class="prev-table" style="font-size:10px; width:100%;">
+                    <thead>
+                        <tr style="background:#eee; color:#000;">
+                            <th style="padding:4px;">Defect</th>
+                            <th style="padding:4px;">Qty</th>
+                            <th style="padding:4px;">%</th>
+                            <th style="padding:4px;">Analysis</th>
+                            <th style="padding:4px;">Img</th>
+                        </tr>
+                    </thead>
+                    <tbody>
     `;
     if(list.length === 0) {
         html += `<tr><td colspan="5" style="text-align:center;">No Defects</td></tr>`;
     } else {
         list.forEach(d => {
-            let imgTag = d.image ? `<img src="${d.image}" class="prev-img" onclick="window.open(this.src)">` : '-';
-            html += `<tr><td><b>${d.name}</b></td><td>${d.qty}</td><td>${formatPct(d.rate||0)}</td><td>${d.analysis}</td><td>${imgTag}</td></tr>`;
+            let imgTag = d.image ? `<img src="${d.image}" style="height:25px; border:1px solid #ccc;" onclick="window.open(this.src)">` : '-';
+            html += `<tr><td><b>${d.name}</b></td><td>${d.qty}</td><td>${formatPct(d.rate||0)}</td><td>${d.analysis}</td><td style="text-align:center;">${imgTag}</td></tr>`;
         });
     }
-    html += `</tbody></table></div>`;
+    html += `</tbody></table></div></div>`;
     
+    document.getElementById('previewBody').style.padding = "10px";
     document.getElementById('previewBody').innerHTML = html;
-    document.getElementById('previewFooter').innerHTML = `<button class="btn-gray" onclick="closeModal()">Close Preview</button>`;
+    document.getElementById('previewFooter').innerHTML = `<button class="btn-gray" onclick="closeModal()">Close</button>`;
     document.getElementById('previewModal').style.display = "block";
 }
 
@@ -733,4 +754,3 @@ function downloadExcel() {
 </script>
 </body>
 </html>
-
