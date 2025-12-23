@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SMT Master Dashboard</title>
 <script src="https://www.gstatic.com/charts/loader.js"></script>
-<!-- Using a specific version of html2pdf for better stability -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
@@ -50,24 +49,34 @@
   /* Report & Charts */
   .report-box { border: 1px solid #ddd; padding: 30px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
   
-  /* STACKED CHARTS FOR REPORT - PAGE BREAK LOGIC ADDED */
-  .chart-stacked { display: block; width: 100%; margin-bottom: 30px; page-break-inside: avoid; }
-  .chart-full { width: 100%; height: 400px; border: 1px solid #eee; padding: 10px; background: #fff; }
+  /* --- CRITICAL CSS FOR PDF PAGE BREAKS --- */
+  .chart-stacked { 
+      display: block; 
+      width: 100%; 
+      margin-bottom: 30px; 
+      /* These properties force the PDF engine to NOT cut the div */
+      page-break-inside: avoid !important; 
+      break-inside: avoid !important; 
+      -webkit-column-break-inside: avoid; 
+  }
   
-  /* DASHBOARD CHARTS */
+  /* Increased height for better label visibility */
+  .chart-full { width: 100%; height: 350px; border: 1px solid #eee; padding: 10px; background: #fff; }
+  
+  /* Dashboard Charts (Side by Side) */
   .chart-row { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
   .chart-box { flex: 1; min-width: 300px; border: 1px solid #eee; padding: 10px; background: #fff; }
 
-  .analysis-item { display: flex; border: 1px solid #eee; padding: 15px; margin-bottom: 10px; gap: 15px; break-inside: avoid; background: #fdfdfd; border-left: 4px solid #007bff; page-break-inside: avoid; }
+  .analysis-item { display: flex; border: 1px solid #eee; padding: 15px; margin-bottom: 10px; gap: 15px; break-inside: avoid; page-break-inside: avoid; background: #fdfdfd; border-left: 4px solid #007bff; }
   .analysis-img { width: 100px; height: 100px; object-fit: contain; border: 1px solid #eee; background: white; cursor: pointer; }
   
-  /* Edit Button */
   .edit-ana-btn { background: none; border: none; color: #007bff; font-weight: bold; cursor: pointer; margin-left: 10px; font-size: 14px; text-decoration: underline; }
   
-  .rem-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; page-break-inside: auto; }
-  .rem-table tr { page-break-inside: avoid; page-break-after: auto; }
+  .rem-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
   .rem-table th, .rem-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
   .rem-table th { background: #343a40; color: white; }
+  /* Avoid breaking inside table rows */
+  .rem-table tr { page-break-inside: avoid; break-inside: avoid; }
 
   /* --- PREVIEW MODAL --- */
   .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
@@ -219,7 +228,7 @@
         <tr><td style="padding:10px;"><b>Total Input:</b> <span id="r_inp">0</span></td><td style="padding:10px;"><b>Total Defect:</b> <span id="r_def">0</span></td><td style="padding:10px;"><b>Rejection Rate:</b> <span id="r_rate_val">0%</span></td></tr>
       </table>
 
-      <!-- CHARTS STACKED -->
+      <!-- CHARTS STACKED (Corrected Page Breaking) -->
       <div class="chart-stacked">
         <div class="chart-full" id="trend_chart_div"></div>
       </div>
@@ -658,7 +667,7 @@ function editAnalysisText(btn) {
 }
 
 // ==========================================
-// REPORTS GENERATION
+// REPORTS GENERATION (Fixed Page Breaks)
 // ==========================================
 function genReport(){
   if(!allData || allData.length === 0) { alert("Data not loaded yet!"); return; }
@@ -719,10 +728,10 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   document.getElementById(defId).innerText = totDef;
   document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
 
-  // CHART OPTIONS - ADJUSTED FOR PDF
+  // CHART OPTIONS - ADJUSTED FOR PDF SAFETY
   let commonOptions = {
      legend: 'none',
-     chartArea: { left: 50, top: 30, width: '90%', height: '55%' },
+     chartArea: { left: 60, top: 40, width: '85%', height: '50%' }, // Reduced height to prevent label clipping
      annotations: { alwaysOutside: true, textStyle: { fontSize: 11, bold: true, color: 'black' } },
      hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 11 } },
      vAxis: { viewWindow: {min:0} }
@@ -799,27 +808,23 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   } catch(e) {}
 }
 
-// --- UPDATED PDF DOWNLOAD FUNCTION TO FIX CUT-OFF ---
+// --- UPDATED PDF DOWNLOAD FUNCTION TO FIX CUT-OFF & PAGE BREAKS ---
 function downloadPDF(elementId, fileName){
   const el = document.getElementById(elementId);
   
-  // 1. Hide Edit Buttons
   let buttons = el.querySelectorAll('.edit-ana-btn');
   buttons.forEach(b => b.style.display = 'none');
 
-  // 2. Configure Options for A4 & Fit
   let opt = {
-    margin:       [0.2, 0.2, 0.2, 0.2], // Top, Left, Bottom, Right
+    margin:       [0.5, 0.2, 0.5, 0.2], // Margin: Top, Left, Bottom, Right (Increased T/B to avoid cut)
     filename:     fileName,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, letterRendering: true }, // Higher scale for clarity
+    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
     jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // PREVENTS GRAPH CUTTING
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // THIS PREVENTS SPLITTING
   };
 
-  // 3. Save
   html2pdf().set(opt).from(el).save().then(() => {
-      // 4. Restore Buttons
       buttons.forEach(b => b.style.display = 'inline');
   });
 }
