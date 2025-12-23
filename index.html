@@ -161,6 +161,12 @@
        <div class="kpi-card" style="border-bottom-color:#6f42c1;"><div>Basement</div><div class="kpi-val" id="k_fb">0%</div></div>
     </div>
 
+    <!-- NEW DASHBOARD CHARTS SECTION -->
+    <div class="chart-row">
+        <div class="chart-box" id="dash_chart_model" style="height:350px;"></div>
+        <div class="chart-box" id="dash_chart_defect" style="height:350px;"></div>
+    </div>
+
     <div style="overflow-x:auto;">
       <table border="1" style="width:100%; border-collapse:collapse; border-color:#eee; font-size:14px;">
         <thead><tr style="background:#003366; color:white;"><th>Date</th><th>Line</th><th>Model</th><th>Input</th><th>Defects</th><th>Rej %</th><th>Action</th></tr></thead>
@@ -421,7 +427,6 @@ function previewEntry() {
         });
     });
 
-    // GENERATE COMPACT HTML (NO SCROLL, SMALLER FONTS)
     let html = `
         <div style="font-size:11px;">
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:5px; margin-bottom:10px;">
@@ -532,6 +537,7 @@ function populateModelDropdown(){
     sel.innerHTML = '<option value="">Select Model</option>' + models.map(m => `<option value="${m}">${m}</option>`).join("");
 }
 
+// UPDATED RENDER FUNCTION WITH CHARTS
 function renderDash(){
   let from = document.getElementById('dash_from').value;
   let to = document.getElementById('dash_to').value || from;
@@ -539,13 +545,31 @@ function renderDash(){
   tBody.innerHTML = "";
   let stats = { all_i:0, all_d:0, f1_i:0, f1_d:0, f2_i:0, f2_d:0, fb_i:0, fb_d:0 };
 
+  // DATA MAPS FOR CHARTS
+  let modelMap = {};
+  let defectMap = {};
+
   allData.forEach((r, idx) => {
     if(r[0] < from || r[0] > to) return;
     let line = +r[1]; let inp = +r[3]; let def = +r[4];
+    let model = r[2];
+
     stats.all_i += inp; stats.all_d += def;
     if(line<=8) { stats.f1_i+=inp; stats.f1_d+=def; }
     else if(line<=16) { stats.f2_i+=inp; stats.f2_d+=def; }
     else { stats.fb_i+=inp; stats.fb_d+=def; }
+
+    // AGGREGATE FOR CHARTS
+    if(!modelMap[model]) modelMap[model] = 0;
+    modelMap[model] += def;
+
+    try {
+        let details = JSON.parse(r[7]);
+        details.forEach(d => {
+            if(!defectMap[d.name]) defectMap[d.name] = 0;
+            defectMap[d.name] += +d.qty;
+        });
+    } catch(e) {}
 
     let displayRej = formatPct(r[5]);
     let valNum = parseFloat(displayRej);
@@ -559,6 +583,49 @@ function renderDash(){
   document.getElementById('k_f1').innerText = rate(stats.f1_d, stats.f1_i);
   document.getElementById('k_f2').innerText = rate(stats.f2_d, stats.f2_i);
   document.getElementById('k_fb').innerText = rate(stats.fb_d, stats.fb_i);
+
+  // DRAW DASHBOARD CHARTS
+  drawDashCharts(modelMap, defectMap);
+}
+
+function drawDashCharts(modelMap, defectMap){
+    // 1. TOP MODELS (Top 5 by Defect Count)
+    let modelArr = [['Model', 'Defects', { role: 'annotation' }]];
+    let sortedModels = Object.keys(modelMap).sort((a,b)=>modelMap[b]-modelMap[a]).slice(0, 5);
+    sortedModels.forEach(m => modelArr.push([m, modelMap[m], modelMap[m]]));
+
+    if(sortedModels.length > 0 && google.visualization){
+        let data = google.visualization.arrayToDataTable(modelArr);
+        let options = {
+            title: 'Top 5 Models (Max Defects)',
+            legend: {position: 'none'},
+            colors: ['#007bff'],
+            annotations: { alwaysOutside: true, textStyle: { fontSize: 20, bold: true, color: '#000' } }, // 2x SIZE
+            vAxis: { textStyle: {fontSize: 11} },
+            hAxis: { textStyle: {fontSize: 11} },
+            chartArea: {width: '80%', height: '70%'}
+        };
+        new google.visualization.ColumnChart(document.getElementById('dash_chart_model')).draw(data, options);
+    } else { document.getElementById('dash_chart_model').innerHTML = "No Data"; }
+
+    // 2. TOP 5 DEFECTS
+    let defectArr = [['Defect', 'Qty', { role: 'annotation' }]];
+    let sortedDefects = Object.keys(defectMap).sort((a,b)=>defectMap[b]-defectMap[a]).slice(0, 5);
+    sortedDefects.forEach(d => defectArr.push([d, defectMap[d], defectMap[d]]));
+
+    if(sortedDefects.length > 0 && google.visualization){
+        let data = google.visualization.arrayToDataTable(defectArr);
+        let options = {
+            title: 'Top 5 Defects',
+            legend: {position: 'none'},
+            colors: ['#dc3545'],
+            annotations: { alwaysOutside: true, textStyle: { fontSize: 20, bold: true, color: '#000' } }, // 2x SIZE
+            vAxis: { textStyle: {fontSize: 11} },
+            hAxis: { textStyle: {fontSize: 11} },
+            chartArea: {width: '80%', height: '70%'}
+        };
+        new google.visualization.ColumnChart(document.getElementById('dash_chart_defect')).draw(data, options);
+    } else { document.getElementById('dash_chart_defect').innerHTML = "No Data"; }
 }
 
 // --- PREVIEW FROM DASHBOARD (USING NEW COMPACT STYLE) ---
