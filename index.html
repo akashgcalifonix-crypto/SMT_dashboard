@@ -34,7 +34,6 @@
   input:focus, select:focus { border-color: #007bff; outline: none; background: #fff; }
   input[readonly] { background-color: #e9ecef; color: #495057; font-weight: bold; }
 
-  /* UPDATED GRID FOR DEFECT ROWS */
   .defect-row { border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 10px; border-radius: 6px; background: #fff; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr 2fr 1fr 0.5fr; gap: 10px; align-items: end; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
   .img-preview { height: 40px; display: none; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
 
@@ -43,27 +42,36 @@
   .kpi-card div:first-child { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
   .kpi-val { font-size: 28px; font-weight: bold; margin-top: 5px; color: #333; }
 
-  /* --- REPORT STYLES (Adjusted for Fit) --- */
+  /* --- FIXED REPORT STYLES FOR PDF (CRITICAL FIX) --- */
+  /* We lock the width to 1050px. This matches A4 Landscape perfectly. */
   .report-box { 
-      border: 1px solid #ddd; padding: 30px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      max-width: 100%; margin-left: auto; margin-right: auto;
+      width: 1050px !important; 
+      margin: 0 auto; /* Center on screen */
+      border: 1px solid #ddd; 
+      padding: 30px; 
+      display: none; 
+      margin-top: 20px; 
+      background: #fff; 
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      overflow: hidden; /* Prevent spillover */
   }
   
-  /* FIXED: PAGE BREAK LOGIC */
+  /* Chart Containers */
   .chart-stacked { 
       display: block; 
       width: 100%; 
-      margin-bottom: 20px; 
+      margin-bottom: 30px; 
+      /* Ensures chart doesn't split between pages */
       page-break-inside: avoid !important; 
       break-inside: avoid !important; 
   }
   
-  /* FIXED: REDUCED HEIGHT & PADDING */
+  /* Chart Size - Adjusted for visibility */
   .chart-full { 
       width: 100%; 
-      height: 300px; 
+      height: 320px; 
       border: 1px solid #eee; 
-      padding: 5px; 
+      padding: 10px; 
       background: #fff; 
   }
   
@@ -105,17 +113,6 @@
   .prev-footer { background: #f1f1f1; padding: 15px 25px; text-align: right; border-top: 1px solid #ddd; }
   
   #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1001; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
-
-  /* --- CRITICAL FIX FOR PDF WIDTH --- */
-  /* Reduced from 1100px to 1020px to prevent cutting */
-  .pdf-mode { 
-      width: 1020px !important; 
-      max-width: 1020px !important; 
-      margin: 0 auto !important; 
-      padding: 15px !important; 
-      background: white !important; 
-      overflow: visible !important;
-  }
 </style>
 </head>
 <body>
@@ -701,10 +698,9 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   document.getElementById(defId).innerText = totDef;
   document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
 
-  // --- CRITICAL FIX: CHART OPTIONS (MORE PADDING LEFT) ---
   let commonOptions = {
      legend: 'none',
-     // "left: 80" gives space for Y-axis labels. "width: 85%" prevents cutting on right.
+     // Fixed Chart Area to Prevent Cutting
      chartArea: { left: 80, top: 40, width: '85%', height: '60%' }, 
      annotations: { alwaysOutside: true, textStyle: { fontSize: 11, bold: true, color: 'black' } },
      hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 11 } },
@@ -789,22 +785,18 @@ function downloadPDF(elementId, fileName){
   let buttons = el.querySelectorAll('.edit-ana-btn');
   buttons.forEach(b => b.style.display = 'none');
   
-  // APPLY PDF SAFE MODE
-  el.classList.add('pdf-mode');
-
+  // Use a simple config now since CSS enforces 1050px width
   let opt = {
     margin:       [0.2, 0.2, 0.2, 0.2], 
     filename:     fileName,
     image:        { type: 'jpeg', quality: 1.0 },
-    // windowWidth: 1050 forces the renderer to think the screen is smaller, centering content
-    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: 1050 },
+    html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
     jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' },
     pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   html2pdf().set(opt).from(el).save().then(() => {
       buttons.forEach(b => b.style.display = 'inline');
-      el.classList.remove('pdf-mode');
   });
 }
 
