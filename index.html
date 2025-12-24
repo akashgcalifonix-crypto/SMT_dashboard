@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -198,7 +199,7 @@
       <div><label>Line</label><input type="number" id="e_line" placeholder="1-24"></div>
       <div><label>Model</label><input type="text" id="e_model"></div>
       <div><label>Input Qty</label><input type="number" id="e_input" oninput="calcTotal()"></div>
-      <div><label>Prep By</label><input type="text" id="e_prep"></div>
+      <div><label>Operator/Prep By</label><input type="text" id="e_prep"></div>
     </div>
 
     <h4 style="margin-bottom:10px; color:#003366;">Defect Details</h4>
@@ -407,7 +408,7 @@ function previewEntry() {
                 <div class="info-box"><span>Shift</span><strong>${data.shift}</strong></div>
                 <div class="info-box"><span>Line</span><strong>${data.line}</strong></div>
                 <div class="info-box"><span>Model</span><strong>${data.model}</strong></div>
-                <div class="info-box"><span>Prepared By</span><strong>${data.prep}</strong></div>
+                <div class="info-box"><span>Operator</span><strong>${data.prep}</strong></div>
             </div>
             <div class="summary-sec">
                 <div class="sum-item"><div class="sum-lbl">Input</div><div class="sum-val">${data.input}</div></div>
@@ -812,4 +813,3 @@ function downloadExcel(){
 </script>
 </body>
 </html>
-
