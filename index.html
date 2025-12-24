@@ -34,7 +34,7 @@
   input:focus, select:focus { border-color: #007bff; outline: none; background: #fff; }
   input[readonly] { background-color: #e9ecef; color: #495057; font-weight: bold; }
 
-  /* UPDATED GRID FOR DEFECT ROWS TO FIT NEW COLUMNS */
+  /* UPDATED GRID FOR DEFECT ROWS */
   .defect-row { border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 10px; border-radius: 6px; background: #fff; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr 2fr 1fr 0.5fr; gap: 10px; align-items: end; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
   .img-preview { height: 40px; display: none; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
 
@@ -43,30 +43,27 @@
   .kpi-card div:first-child { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
   .kpi-val { font-size: 28px; font-weight: bold; margin-top: 5px; color: #333; }
 
-  /* --- REPORT STYLES FOR PDF --- */
+  /* --- REPORT STYLES (Adjusted for Fit) --- */
   .report-box { 
       border: 1px solid #ddd; padding: 30px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      /* Restrict width to avoid horizontal cut off in landscape */
-      max-width: 1100px; margin-left: auto; margin-right: auto;
+      max-width: 100%; margin-left: auto; margin-right: auto;
   }
   
   /* FIXED: PAGE BREAK LOGIC */
   .chart-stacked { 
       display: block; 
       width: 100%; 
-      margin-bottom: 25px; 
-      /* These rules force the PDF tool to NOT cut inside this div */
+      margin-bottom: 20px; 
       page-break-inside: avoid !important; 
       break-inside: avoid !important; 
-      -webkit-region-break-inside: avoid;
   }
   
-  /* FIXED: REDUCED HEIGHT */
+  /* FIXED: REDUCED HEIGHT & PADDING */
   .chart-full { 
       width: 100%; 
-      height: 280px; /* Reduced from 350px to fit better on A4 */
+      height: 300px; 
       border: 1px solid #eee; 
-      padding: 10px; 
+      padding: 5px; 
       background: #fff; 
   }
   
@@ -109,14 +106,15 @@
   
   #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1001; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
 
-  /* PDF MODE CLASS - Applied during download */
+  /* --- CRITICAL FIX FOR PDF WIDTH --- */
+  /* Reduced from 1100px to 1020px to prevent cutting */
   .pdf-mode { 
-      width: 1100px !important; 
-      max-width: 1100px !important; 
+      width: 1020px !important; 
+      max-width: 1020px !important; 
       margin: 0 auto !important; 
-      padding: 20px !important; 
+      padding: 15px !important; 
       background: white !important; 
-      overflow: visible !important; /* Changed from hidden to visible */
+      overflow: visible !important;
   }
 </style>
 </head>
@@ -185,7 +183,7 @@
     </div>
   </div>
 
-  <!-- 2. DATA ENTRY (UPDATED) -->
+  <!-- 2. DATA ENTRY -->
   <div id="entry" style="display:none;">
     <h3>📝 Add / Edit Record</h3>
     <input type="hidden" id="edit_index">
@@ -241,7 +239,6 @@
         <tr><td style="padding:10px;"><b>Total Input:</b> <span id="r_inp">0</span></td><td style="padding:10px;"><b>Total Defect:</b> <span id="r_def">0</span></td><td style="padding:10px;"><b>Rejection Rate:</b> <span id="r_rate_val">0%</span></td></tr>
       </table>
       
-      <!-- CHARTS with Page Break Protection -->
       <div class="chart-stacked"><div class="chart-full" id="trend_chart_div"></div></div>
       <div class="chart-stacked"><div class="chart-full" id="model_chart_div"></div></div>
       <div class="chart-stacked"><div class="chart-full" id="pareto_chart_div"></div></div>
@@ -283,7 +280,6 @@
 </div>
 
 <script>
-// IMPORTANT: IF YOU ADDED NEW COLUMNS, THE GOOGLE SCRIPT MIGHT NEED ADJUSTMENT TO ACCEPT MORE COLUMNS
 const API_URL = "https://script.google.com/macros/s/AKfycbzkn_YQtnDPW47OTPt9ZlASfj66JMmYdGjbCOvhVL3mwXvfERdtFY761KDqut88dv42FQ/exec";
 const DEFECT_MASTER_LIST = ["Body Sensor Fail","Single LED glow","Channel Fail","SMD Component damaged","DUT Mode Fail","Electric sound","Heating","High Current","Enquiry","LED Not glow","LED Miss","Low current","Secondary MIC Fail","Talk MIC Fail","Not On","POGO Pin shift","Software skip","RF Fail","CTC Fail","Speaker Fail","Scrap","Extra Burr","Mic Distortion"];
 
@@ -312,7 +308,7 @@ function formatPct(val) {
 }
 
 // ==========================================
-// DATA ENTRY WITH NEW COLUMNS (Ref ID, Action)
+// DATA ENTRY
 // ==========================================
 function addDefectRow(data = null){
   const div = document.createElement('div');
@@ -705,9 +701,11 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   document.getElementById(defId).innerText = totDef;
   document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
 
+  // --- CRITICAL FIX: CHART OPTIONS (MORE PADDING LEFT) ---
   let commonOptions = {
      legend: 'none',
-     chartArea: { left: 60, top: 40, width: '90%', height: '60%' }, 
+     // "left: 80" gives space for Y-axis labels. "width: 85%" prevents cutting on right.
+     chartArea: { left: 80, top: 40, width: '85%', height: '60%' }, 
      annotations: { alwaysOutside: true, textStyle: { fontSize: 11, bold: true, color: 'black' } },
      hAxis: { slantedText: true, slantedTextAngle: 45, textStyle: { fontSize: 11 } },
      vAxis: { viewWindow: {min:0} }
@@ -790,15 +788,17 @@ function downloadPDF(elementId, fileName){
   const el = document.getElementById(elementId);
   let buttons = el.querySelectorAll('.edit-ana-btn');
   buttons.forEach(b => b.style.display = 'none');
+  
+  // APPLY PDF SAFE MODE
   el.classList.add('pdf-mode');
 
   let opt = {
     margin:       [0.2, 0.2, 0.2, 0.2], 
     filename:     fileName,
     image:        { type: 'jpeg', quality: 1.0 },
-    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: 1200 },
+    // windowWidth: 1050 forces the renderer to think the screen is smaller, centering content
+    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: 1050 },
     jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' },
-    // ENFORCE AVOID PAGE BREAKS
     pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
