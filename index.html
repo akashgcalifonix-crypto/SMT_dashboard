@@ -46,8 +46,19 @@
   .kpi-card div:first-child { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
   .kpi-val { font-size: 28px; font-weight: bold; margin-top: 5px; color: #333; }
 
-  /* Report & Charts */
-  .report-box { border: 1px solid #ddd; padding: 30px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+  /* Report & Charts - IMPROVED FOR PDF */
+  .report-box { 
+      border: 1px solid #ddd; 
+      padding: 30px; 
+      display: none; 
+      margin-top: 20px; 
+      background: #fff; 
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      /* FORCE WIDTH TO MATCH A4 LANDSCAPE APPROXIMATELY TO PREVENT CUTTING */
+      max-width: 1100px; 
+      margin-left: auto;
+      margin-right: auto;
+  }
   
   /* STACKED CHARTS FOR REPORT - PAGE BREAK LOGIC */
   .chart-stacked { 
@@ -100,6 +111,17 @@
   .prev-footer { background: #f1f1f1; padding: 15px 25px; text-align: right; border-top: 1px solid #ddd; }
   
   #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1001; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
+
+  /* --- PDF GENERATION SPECIFIC STYLE --- */
+  /* This ensures the PDF looks exactly like an A4 page so nothing gets cut */
+  .pdf-mode {
+    width: 1100px !important;
+    max-width: 1100px !important;
+    margin: 0 auto !important;
+    padding: 20px !important;
+    background: white !important;
+    overflow: hidden !important;
+  }
 </style>
 </head>
 <body>
@@ -210,6 +232,7 @@
       </div>
     </div>
 
+    <!-- ADDED ID for PDF targeting -->
     <div id="print_area" class="report-box">
       <!-- Report Header -->
       <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
@@ -224,7 +247,7 @@
         <tr><td style="padding:10px;"><b>Total Input:</b> <span id="r_inp">0</span></td><td style="padding:10px;"><b>Total Defect:</b> <span id="r_def">0</span></td><td style="padding:10px;"><b>Rejection Rate:</b> <span id="r_rate_val">0%</span></td></tr>
       </table>
 
-      <!-- CHARTS STACKED (Corrected Page Breaking) -->
+      <!-- CHARTS STACKED -->
       <div class="chart-stacked">
         <div class="chart-full" id="trend_chart_div"></div>
       </div>
@@ -804,24 +827,35 @@ function processReportData(start, end, filterModel, areaId, subId, inpId, defId,
   } catch(e) {}
 }
 
-// --- UPDATED PDF DOWNLOAD FUNCTION FOR LANDSCAPE MODE ---
+// --- UPDATED PDF DOWNLOAD FUNCTION FOR AUTO-FIT & NO CUTTING ---
 function downloadPDF(elementId, fileName){
   const el = document.getElementById(elementId);
   
   let buttons = el.querySelectorAll('.edit-ana-btn');
   buttons.forEach(b => b.style.display = 'none');
 
+  // Add the Auto-Fit class to force standard A4 width
+  el.classList.add('pdf-mode');
+
   let opt = {
-    margin:       [0.3, 0.3, 0.3, 0.3], // Reduced margins slightly for landscape
+    margin:       [0.2, 0.2, 0.2, 0.2], 
     filename:     fileName,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
-    jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }, // CHANGED TO LANDSCAPE
+    image:        { type: 'jpeg', quality: 1.0 },
+    html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        scrollY: 0,
+        // Ensure canvas treats the window as wide enough for the fixed width
+        windowWidth: 1200 
+    },
+    jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' },
     pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   html2pdf().set(opt).from(el).save().then(() => {
+      // Revert styles after download
       buttons.forEach(b => b.style.display = 'inline');
+      el.classList.remove('pdf-mode');
   });
 }
 </script>
