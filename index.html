@@ -400,9 +400,9 @@ function previewEntry() {
         });
     });
 
-    // --- EDITED: Sort Defects by Quantity Descending ---
+    // --- SORT FOR NEW ENTRY (DESCENDING) ---
     data.defects.sort((a, b) => (Number(b.qty) || 0) - (Number(a.qty) || 0));
-    // ---------------------------------------------------
+    // ---------------------------------------
 
     let html = `
         <div style="font-size:16px;">
@@ -580,6 +580,10 @@ function drawDashCharts(modelMap, defectMap, totalInput){
 function previewEntryFromRow(idx, r){
     let data = { date: r[0], line: r[1], model: r[2], input: r[3], total: r[4], rate: formatPct(r[5]), prep: r[6], shift: r[8]||'-' };
     let list = []; try{list=JSON.parse(r[7])}catch(e){}
+
+    // --- SORT FOR DASHBOARD VIEW (DESCENDING) ---
+    list.sort((a, b) => (Number(b.qty) || 0) - (Number(a.qty) || 0));
+    // --------------------------------------------
     
     let html = `
         <div style="font-size:16px;">
