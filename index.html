@@ -18,7 +18,7 @@
   .main-title h2 { margin: 0; color: #003366; }
   .main-title p { margin: 0; color: #666; font-size: 12px; }
   
-  /* CATEGORY SELECTOR (New, Simple) */
+  /* CATEGORY SELECTOR */
   .category-select { padding: 8px; border-radius: 4px; border: 1px solid #003366; color: #003366; font-weight: bold; cursor: pointer; background: #eef; }
 
   .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -63,6 +63,12 @@
   .rem-table th, .rem-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
   .rem-table th { background: #343a40; color: white; }
 
+  /* THEME OVERRIDES FOR CASE */
+  .theme-case th { background: #E36C09 !important; }
+  .theme-case .main-title h2 { color: #E36C09 !important; }
+  .theme-case .kpi-card { border-bottom-color: #E36C09 !important; }
+  .theme-case .analysis-item { border-left-color: #E36C09 !important; }
+
   /* PREVIEW MODAL */
   .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
   .modal-content { background-color: #fff; margin: 2% auto; padding: 0; border: none; width: 90%; max-width: 850px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); overflow: hidden; }
@@ -77,6 +83,13 @@
   .prev-footer { background: #f1f1f1; padding: 15px 25px; text-align: right; border-top: 1px solid #ddd; }
   
   #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1001; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
+  
+  .category-switch { display: flex; justify-content: center; margin-bottom: 25px; }
+  .cat-btn { padding: 12px 40px; border: 1px solid #ccc; background: #e9ecef; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; flex: 1; max-width: 250px; text-align: center; color: #555; }
+  .cat-btn:first-child { border-radius: 30px 0 0 30px; border-right: none; }
+  .cat-btn:last-child { border-radius: 0 30px 30px 0; border-left: none; }
+  .cat-btn.active-buds { background: #003366; color: white; border-color: #003366; }
+  .cat-btn.active-case { background: #E36C09; color: white; border-color: #E36C09; }
 </style>
 </head>
 <body>
@@ -110,6 +123,12 @@
 </div>
 
 <div class="container">
+  <!-- CATEGORY TOGGLE (Same UI) -->
+  <div class="category-switch">
+      <div id="btn_earbuds" class="cat-btn active-buds" onclick="switchCategory('Earbuds')">🎧 Earbuds Dashboard</div>
+      <div id="btn_case" class="cat-btn" onclick="switchCategory('ChargingCase')">🔋 Charging Case Dashboard</div>
+  </div>
+
   <div class="nav">
     <button class="btn-blue" onclick="showPage('dashboard')">Dashboard</button>
     <button class="btn-gray" onclick="showPage('entry')">Data Entry</button>
@@ -147,8 +166,7 @@
   <div id="entry" style="display:none;">
     <h3>📝 Add / Edit Record</h3>
     <input type="hidden" id="edit_index"><input type="hidden" id="edit_sheet_name">
-    <datalist id="model_list_options"></datalist>
-
+    
     <div class="form-grid">
       <div><label>Date</label><input type="date" id="e_date"></div>
       <div>
@@ -156,7 +174,8 @@
         <select id="e_shift"><option value="A">Shift A</option><option value="B">Shift B</option><option value="C">Shift C</option></select>
       </div>
       <div><label>Line</label><input type="number" id="e_line" placeholder="1-24"></div>
-      <div><label>Model</label><input type="text" id="e_model" list="model_list_options" placeholder="Type or Select Model"></div>
+      <!-- CHANGED TO SELECT DROPDOWN -->
+      <div><label>Model</label><select id="e_model"><option value="">Select Model</option></select></div>
       <div><label>Input Qty</label><input type="number" id="e_input" oninput="calcTotal()"></div>
       <div><label>Operator/Prep By</label><input type="text" id="e_prep"></div>
     </div>
@@ -184,7 +203,7 @@
       <div><label>To Date</label><input type="date" id="r_date_end"></div>
       <div style="display:flex; align-items:end; gap:10px;">
         <button class="btn-blue" onclick="genReport()">Generate</button>
-        <button class="btn-green" onclick="downloadPDF('print_area', 'Overall_Report.pdf')">PDF</button>
+        <button class="btn-green" onclick="downloadPDF('print_area', 'Overall_Report.pdf')">Download PDF</button>
       </div>
     </div>
     <div id="print_area" class="report-box">
@@ -226,7 +245,7 @@
       <div class="chart-stacked"><div class="chart-full" id="m_pareto_chart"></div></div>
       <h4 style="border-bottom:2px solid #333;">🏆 Top Defects</h4><div id="m_analysis_list"></div>
       <table class="rem-table"><thead><tr><th>Defect</th><th>Qty</th><th>Rate %</th></tr></thead><tbody id="m_remaining_list"></tbody></table>
-      <table id="excel_table" style="display:none;"><thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defect</th><th>Qty</th><th>Analysis</th><th>Action</th></tr></thead><tbody id="excel_body"></tbody></table>
+      <table id="excel_table" style="display:none;"><thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defect Name</th><th>Ref ID</th><th>Qty</th><th>Defect %</th><th>Analysis</th><th>Action Taken</th></tr></thead><tbody id="excel_body"></tbody></table>
     </div>
   </div>
 
@@ -261,17 +280,49 @@
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxMxRwOK0125O5IzOvf3Yhn54qUqiDnN0cBwVzjOZpGpK2U8CSWSiWL9HQytdTrlIQYng/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbweFBgyW1LR3SLr0wHrt_dUXRXmN1qGwNjbmhcmCTLMzjm3wjTeNA1wofzAz801zEvmng/exec";
 
-// --- CONFIGURATION: Define Models and Defects Separately ---
+// --- FULL MODEL LIST ---
+const MASTER_MODELS = [
+    "Ad Unity ANC", "Ace", "Ad 111v2", "Ad 118", "Ad 120", "Ad 121Pro Plus",
+    "Ad 131 Elite Anc", "Ad 131 Gen 2", "Ad 131 Pro Buds", "Ad 138 Gen 2",
+    "Ad 141 Anc", "Ad 141 Anc Elite", "Ad 141 Gen 2", "Ad 141 Pro Buds",
+    "Ad 148 Gen 2", "Ad 155", "Ad 161 Anc", "Ad 161 Anc Elite", "Ad 161 N",
+    "Ad 181 Pro", "Ad 191 Anc", "Ad 192", "Ad 212", "Ad 213", "Ad 280 Anc",
+    "Ad 300", "Ad 301", "Ad 311 Pro", "Ad 313", "Ad 701 Anc", "AD 71",
+    "Ad 800", "Ad 800 Hidef", "Ad 91", "Ad 91 Prime", "Ad Ace Gen 2",
+    "Ad Alpha Gen 2", "AD Hype", "AD Kick", "Ad Nirvana Crystal",
+    "Ad Nirvana Iris", "Ad Nirvana X", "Ad Plus 311", "Ad Plus 318",
+    "Ad Prime 412", "Ad Prime 513 Anc", "Ad Primo", "Ad Pulse",
+    "AD Supreme", "Ad Ultra Pro", "Ad100", "Ad121 Pro", "Ad125",
+    "Ad131", "Ad131 Pro", "Ad138", "Ad138 Pro", "Ad141", "Ad148",
+    "Ad161", "AD161 Pro-Buds", "AD163", "Ad170", "AD181", "AD183",
+    "Ad190", "AD191 G", "Airdopes 207", "Alpha", "Amazon basics",
+    "Atom 81 Pro", "Atom 83", "Atom81", "Dashcam Hive E1",
+    "Dashcam Hive F1", "HMD P50", "HMD P60", "HMD P70", "HMD S60",
+    "HMD X50", "HMD X50 Pro", "IMT 100", "IMT101", "IMT121",
+    "IMT128", "IMT131", "IMT161", "IMT181", "Joy", "Max", "Nirvana",
+    "Nirvana Ion (ANC)", "Nirvana Ion ANC Pro", "Nirvana ION N Mold",
+    "R 195 Pro", "Ultra Plus", "Zing"
+];
+
+const MASTER_DEFECTS = [
+    "Body Sensor Fail", "Single LED glow", "Channel Fail", "SMD Component damaged",
+    "DUT Mode Fail", "Electric sound", "Heating", "High Current", "Enquiry",
+    "LED Not glow", "LED Miss", "Low current", "Secondary MIC Fail", "Talk MIC Fail",
+    "Not On", "POGO Pin shift", "Software skip", "RF Fail", "CTC Fail",
+    "Speaker Fail", "Scrap", "Extra Burr", "Mic Distortion"
+];
+
+// --- CONFIGURATION ---
 const CONFIG = {
     Earbuds: {
-        defects: ["Bt No connected", "High current", "Mic fail", "Mic missing / drop", "Not On", "RF fail", "sensor damage", "Single LED Blink/LED not blink", "Speaker fail", "Dut Mode", "Component Shift", "Pogo Pin shift", "LED miss", "Body Sensor Fail", "Channel Fail", "Enquiry", "Low current", "Secondary MIC Fail", "Talk MIC Fail", "Software skip", "CTC Fail", "Scrap", "Extra Burr", "Mic Distortion"],
-        models: ["Ad Unity ANC","Ace","Ad 111v2","Ad 118","Ad 120","Ad 121Pro Plus","Ad 131 Elite Anc","Ad 131 Gen 2","Ad 131 Pro Buds","Ad 138 Gen 2","Ad 141 Anc","Ad 141 Anc Elite","Ad 141 Gen 2","Ad 141 Pro Buds","Ad 148 Gen 2","Ad 155","Ad 161 Anc","Ad 161 Anc Elite","Ad 161 N","Ad 181 Pro","Ad 191 Anc","Ad 192","Ad 212","Ad 213","Ad 280 Anc","Ad 300","Ad 301","Ad 311 Pro","Ad 313","Ad 701 Anc","AD 71","Ad 800","Ad 800 Hidef","Ad 91","Ad 91 Prime","Ad Ace Gen 2","Ad Alpha Gen 2","AD Hype","AD Kick","Ad Nirvana Crystal","Ad Nirvana Iris","Ad Nirvana X","Ad Plus 311","Ad Plus 318","Ad Prime 412","Ad Prime 513 Anc","Ad Primo","Ad Pulse","AD Supreme","Ad Ultra Pro","Ad100","Ad121 Pro","Ad125","Ad131","Ad131 Pro","Ad138","Ad138 Pro","Ad141","Ad148","Ad161","AD161 Pro-Buds","AD163","Ad170","AD181","AD183","Ad190","AD191 G","Airdopes 207","Alpha","Amazon basics","Atom 81 Pro","Atom 83","Atom81","Dashcam Hive E1","Dashcam Hive F1","HMD P50","HMD P60","HMD P70","HMD S60","HMD X50","HMD X50 Pro","IMT 100","IMT101","IMT121","IMT128","IMT131","IMT161","IMT181","Joy","Max","Nirvana","Nirvana Ion (ANC)","Nirvana Ion ANC Pro","Nirvana ION N Mold","R 195 Pro","Ultra Plus","Zing"]
+        defects: MASTER_DEFECTS,
+        models: MASTER_MODELS
     },
     ChargingCase: {
-        defects: ["Scratches", "Hinge Loose", "Won't Close", "Won't Open", "Not Charging Buds", "USB Port Fail", "Led Fail", "Battery Draining", "Gap Issue", "Dirty", "Broken", "Magnet Fail", "Pogo Pin Fail"],
-        models: ["Case Alpha", "Case Pulse", "Case HMD", "Case Unity", "Generic Case"]
+        defects: MASTER_DEFECTS,
+        models: MASTER_MODELS
     }
 };
 
@@ -286,27 +337,61 @@ window.onload = () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('e_date').value = today;
     document.getElementById('dash_from').value = today;
+    
+    // Initialize Category Selector
+    document.getElementById('cat_select').value = "Earbuds";
+    
     loadAllData();
 };
 
+// --- SWITCH LOGIC ---
 function switchCategory(cat) {
     currentCategory = cat;
-    currentData = (cat === 'Earbuds') ? rawData.earbuds : rawData.charging_case;
     
-    // Update Dropdowns
-    let dList = document.getElementById('model_list_options'); dList.innerHTML = "";
-    let existingModels = [...new Set(currentData.map(r=>r[2]))];
-    let allModels = [...new Set([...CONFIG[cat].models, ...existingModels])].sort();
-    allModels.forEach(m => { let opt = document.createElement('option'); opt.value = m; dList.appendChild(opt); });
+    // UI Updates
+    document.getElementById('btn_earbuds').className = cat === 'Earbuds' ? 'cat-btn active-buds' : 'cat-btn';
+    document.getElementById('btn_case').className = cat === 'ChargingCase' ? 'cat-btn active-case' : 'cat-btn';
+    document.getElementById('cat_select').value = cat; // Sync dropdown
+    
+    document.body.className = cat === 'Earbuds' ? 'theme-earbuds' : 'theme-case';
 
-    document.getElementById('m_model_select').innerHTML = allModels.map(m=>`<option>${m}</option>`).join('');
-    document.getElementById('d_defect_select').innerHTML = CONFIG[cat].defects.map(d=>`<option>${d}</option>`).join('');
+    // Switch Data Pointer
+    currentData = (cat === 'Earbuds') ? rawData.earbuds : rawData.charging_case;
 
-    // Refresh UI
+    // Update Dropdowns and Lists
+    updateDropdowns();
+
+    // Reset Forms & Refresh Dashboard
     document.getElementById('defect_wrapper').innerHTML = "";
     addDefectRow();
     renderDash();
     showPage('dashboard');
+}
+
+function updateDropdowns(){
+    let catConfig = CONFIG[currentCategory];
+    
+    // Data Entry Model List
+    let dList = document.getElementById('e_model');
+    dList.innerHTML = '<option value="">Select Model</option>';
+    
+    // Combine configured models with any found in data to capture all
+    let existingModels = [...new Set(currentData.map(r=>r[2]))];
+    let allModels = [...new Set([...catConfig.models, ...existingModels])].sort();
+    
+    allModels.forEach(m => { 
+        let opt = document.createElement('option'); 
+        opt.value = m; 
+        opt.innerText = m;
+        dList.appendChild(opt); 
+    });
+
+    // Report Dropdowns
+    let mSelect = document.getElementById('m_model_select');
+    mSelect.innerHTML = '<option value="">Select Model</option>' + allModels.map(m=>`<option value="${m}">${m}</option>`).join('');
+    
+    let dSelect = document.getElementById('d_defect_select');
+    dSelect.innerHTML = '<option value="">Select Defect</option>' + catConfig.defects.map(d=>`<option value="${d}">${d}</option>`).join('');
 }
 
 function showPage(id){
@@ -473,7 +558,7 @@ async function saveData(){
     rejRate: document.getElementById('lbl_rate').value,
     prep: document.getElementById('e_prep').value,
     defects: defects,
-    defectList: CONFIG[currentCategory].defects // Send the correct list for matrix
+    defectList: CONFIG[currentCategory].defects // Send list to ensure matrix consistency
   };
 
   try {
@@ -498,6 +583,8 @@ function renderDash(){
   let to = document.getElementById('dash_to').value || from;
   let tBody = document.getElementById('dash_table');
   tBody.innerHTML = "";
+  
+  // STATS: Floor 1 (Line 1-8), Floor 2 (Line 9-16), Basement (Line 17+)
   let stats = { all_i:0, all_d:0, f1_i:0, f1_d:0, f2_i:0, f2_d:0, fb_i:0, fb_d:0 };
   let modelMap = {}, defectMap = {};
 
@@ -506,9 +593,11 @@ function renderDash(){
     let line = +r[1]; let inp = +r[3]; let def = +r[4];
     
     stats.all_i += inp; stats.all_d += def;
-    if(line<=8) { stats.f1_i+=inp; stats.f1_d+=def; }
-    else if(line<=16) { stats.f2_i+=inp; stats.f2_d+=def; }
-    else { stats.fb_i+=inp; stats.fb_d+=def; }
+    
+    // Floor Logic
+    if(line <= 8) { stats.f1_i += inp; stats.f1_d += def; }
+    else if(line <= 16) { stats.f2_i += inp; stats.f2_d += def; }
+    else { stats.fb_i += inp; stats.fb_d += def; }
 
     if(!modelMap[r[2]]) modelMap[r[2]] = {def:0, inp:0};
     modelMap[r[2]].def += def;
@@ -516,7 +605,10 @@ function renderDash(){
 
     try { JSON.parse(r[7]).forEach(d => { if(!defectMap[d.name]) defectMap[d.name]=0; defectMap[d.name]+= (+d.qty); }); } catch(e) {}
 
-    tBody.innerHTML += `<tr><td>${r[0]}</td><td>${r[8]||'-'}</td><td>${r[1]}</td><td>${r[2]}</td><td>${inp}</td><td>${r[4]}</td><td style="color:${(r[5]*100)>1?'red':'green'}">${(r[5]*100).toFixed(2)}%</td><td><button class="btn-info" style="padding:5px;" onclick='previewEntryFromRow(${idx}, ${JSON.stringify(r)})'>View</button> <button class="btn-blue" style="padding:5px;" onclick='editRow(${idx}, ${JSON.stringify(r)})'>✎</button> <button class="btn-red" style="padding:5px;" onclick="delRow('${r[9]}', ${r[10]})">🗑</button></td></tr>`;
+    let displayRej = formatPct(r[5]);
+    let color = parseFloat(displayRej) > 0 ? (parseFloat(displayRej) > 1 ? 'red' : '#e65100') : 'green';
+
+    tBody.innerHTML += `<tr><td>${r[0]}</td><td>${r[8]||'-'}</td><td>${r[1]}</td><td>${r[2]}</td><td>${inp}</td><td>${r[4]}</td><td style="color:${color}; font-weight:bold;">${displayRej}</td><td><button class="btn-info" style="padding:5px;" onclick='previewEntryFromRow(${idx}, ${JSON.stringify(r)})'>View</button> <button class="btn-blue" style="padding:5px;" onclick='editRow(${idx}, ${JSON.stringify(r)})'>✎</button> <button class="btn-red" style="padding:5px;" onclick="delRow('${r[9]}', ${r[10]})">🗑</button></td></tr>`;
   });
 
   const rate = (d,i) => i>0 ? (d/i*100).toFixed(2)+"%" : "0.00%";
@@ -630,7 +722,7 @@ function processReportData(rData, subId, inpId, defId, rateId, trendId, paretoId
 
   document.getElementById(inpId).innerText = totInp;
   document.getElementById(defId).innerText = totDef;
-  document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0%";
+  document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
 
   if(trendId){
       let trendData = [['Date', 'Rate %']];
@@ -673,4 +765,3 @@ function downloadPPT(){
 </script>
 </body>
 </html>
-
