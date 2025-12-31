@@ -23,7 +23,7 @@
   /* --- 1. HEADER & LOGO --- */
   .main-header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px 30px; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 25px; max-width: 1250px; margin-left: auto; margin-right: auto; border-left: 5px solid var(--secondary); }
   .header-left { display: flex; align-items: center; gap: 20px; }
-  .logo-img { height: 55px; object-fit: contain; } /* Main Logo Style */
+  .logo-img { height: 55px; object-fit: contain; }
   .main-title h2 { margin: 0; color: var(--primary); font-weight: 800; font-size: 22px; }
   .main-title p { margin: 0; color: #777; font-size: 13px; font-weight: 500; }
   
@@ -43,7 +43,7 @@
   .btn-green { background: #218838; color: white; }
   .btn-gray { background: #5a6268; color: white; }
   .btn-red { background: #c82333; color: white; }
-  .btn-info { background: #138496; color: white; }
+  .btn-info { background: #138496; color: white; } /* Excel Button Style */
   .btn-purple { background: #6610f2; color: white; }
   .btn-orange { background: var(--secondary); color: white; }
   .btn-dark { background: #23272b; color: white; }
@@ -68,7 +68,6 @@
   .kpi-val { font-size: 36px; font-weight: 800; margin-top: 10px; color: #222; }
 
   /* --- 7. REPORT & CHARTS --- */
-  /* Ensures PDF prints clearly */
   .report-box { width: 1100px !important; margin: 0 auto; border: none; padding: 40px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 5px 30px rgba(0,0,0,0.15); overflow: hidden; border-radius: 8px; }
   
   .report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; }
@@ -169,7 +168,6 @@
 
 <div class="main-header">
     <div class="header-left">
-        <!-- LOGO HERE -->
         <img src="https://i.postimg.cc/5y7SN4xc/logo.png" class="logo-img" alt="Califonix Logo">
         <div class="main-title">
             <h2>SMT Rejection Outlook</h2>
@@ -324,6 +322,7 @@
       <div style="display:flex; align-items:end; gap:10px;">
         <button class="btn-purple" onclick="genModelReport()">View</button>
         <button class="btn-green" onclick="downloadPDF('model_print_area', 'Model_Report.pdf')">PDF</button>
+        <button class="btn-info" onclick="downloadExcel('excel_table', 'Model_Report.xls')">Excel</button>
       </div>
     </div>
     <div id="model_print_area" class="report-box">
@@ -344,6 +343,7 @@
       <div class="chart-stacked"><div class="chart-full" id="m_pareto_chart"></div></div>
       <h4 style="border-bottom:2px solid #333;">🏆 Top Defects (Editable)</h4><div id="m_analysis_list"></div>
       <table class="rem-table"><tbody id="m_remaining_list"></tbody></table>
+      <table id="excel_table" style="display:none;"><thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defect Name</th><th>Qty</th><th>Ref ID</th><th>Analysis</th></tr></thead><tbody id="excel_body"></tbody></table>
     </div>
   </div>
 
@@ -356,6 +356,7 @@
       <div style="display:flex; align-items:end; gap:5px;">
         <button class="btn-orange" onclick="genDefectWiseReport()">Generate</button>
         <button class="btn-green" onclick="downloadPDF('defect_print_area', 'Defect_Report.pdf')">PDF</button>
+        <button class="btn-info" onclick="downloadExcel('defect_excel_table', 'Defect_Report.xls')">Excel</button>
         <button class="btn-purple" onclick="downloadProfessionalPPT('Defect')">PPT</button>
       </div>
     </div>
@@ -375,6 +376,7 @@
       <div class="chart-stacked"><div class="chart-full" id="d_contrib_chart"></div></div>
       <h4 style="border-bottom:2px solid #333;">🔍 Analysis & Actions</h4><div id="d_analysis_list"></div>
       <table class="rem-table" id="defect_detail_table"><tbody id="defect_detail_body"></tbody></table>
+      <table id="defect_excel_table" style="display:none;"><thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defect</th><th>Qty</th><th>Analysis</th></tr></thead><tbody id="defect_excel_body"></tbody></table>
     </div>
   </div>
 
@@ -385,6 +387,7 @@
           <div style="display:flex; align-items:end; gap:10px;">
               <button class="btn-dark" onclick="genMonthReport()">Load Dashboard</button>
               <button class="btn-green" onclick="downloadPDF('month_print_area', 'Monthly_Report.pdf')">PDF</button>
+              <button class="btn-info" onclick="downloadExcel('month_excel_table', 'Month_Report.xls')">Excel</button>
               <button class="btn-purple" onclick="downloadProfessionalPPT('Month')">Professional PPT</button>
           </div>
       </div>
@@ -414,6 +417,8 @@
           <h3 style="border-left:5px solid var(--primary); padding-left:10px; margin-top:30px;">Analysis Overview (Editable)</h3>
           <div id="mo_analysis_list"></div>
       </div>
+      <!-- Hidden Table for Month Excel -->
+      <table id="month_excel_table" style="display:none;"><thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defect Name</th><th>Qty</th><th>Ref</th><th>Analysis</th></tr></thead><tbody id="month_excel_body"></tbody></table>
   </div>
 
 </div>
@@ -482,18 +487,12 @@ function updateDropdowns(){
     dList.innerHTML = '<option value="">Select Model</option>';
     let existingModels = [...new Set(currentData.map(r=>r[2]))];
     let allModels = [...new Set([...catConfig.models, ...existingModels])].sort();
-    
-    // Fill Single Select
     allModels.forEach(m => { 
         let opt = document.createElement('option'); opt.value = m; opt.innerText = m;
         dList.appendChild(opt); 
     });
-
-    // Fill Defect Select
     let dSelect = document.getElementById('d_defect_select');
     dSelect.innerHTML = '<option value="">Select Defect</option>' + catConfig.defects.map(d=>`<option value="${d}">${d}</option>`).join('');
-
-    // Fill Multi-Select
     let cbContainer = document.getElementById('checkboxes');
     cbContainer.innerHTML = "";
     allModels.forEach(m => {
@@ -503,7 +502,6 @@ function updateDropdowns(){
     });
 }
 
-// MULTI SELECT LOGIC
 let expanded = false;
 function showCheckboxes() {
   let checkboxes = document.getElementById("checkboxes");
@@ -542,7 +540,6 @@ function calcTotal(){
     document.querySelectorAll('.defect-row').forEach(row => { let q = +row.querySelector('.d-qty').value || 0; row.querySelector('.d-rate').value = (inp>0 && q>0) ? (q/inp*100).toFixed(2)+"%" : "0%"; });
 }
 
-// --- COLORFUL PREVIEW MODAL ---
 function previewEntry() { renderPreviewModal(getEntryData()); }
 function getEntryData() {
     let d = {
@@ -577,34 +574,20 @@ function renderPreviewModal(data, isReadOnly=false){
         <div class="info-tag"><span>SHIFT / LINE</span><strong>${data.shift} / ${data.line}</strong></div>
         <div class="info-tag"><span>OPERATOR</span><strong>${data.prep}</strong></div>
     </div>
-    
     <div class="summary-banner">
-        <div class="sum-col">
-            <div class="sum-label">INPUT QUANTITY</div>
-            <div class="sum-number">${data.input}</div>
-        </div>
-        <div class="sum-col">
-            <div class="sum-label">TOTAL DEFECTS</div>
-            <div class="sum-number bad">${data.total}</div>
-        </div>
-        <div class="sum-col">
-            <div class="sum-label">REJECTION RATE</div>
-            <div class="sum-number">${data.rate}</div>
-        </div>
+        <div class="sum-col"><div class="sum-label">INPUT QUANTITY</div><div class="sum-number">${data.input}</div></div>
+        <div class="sum-col"><div class="sum-label">TOTAL DEFECTS</div><div class="sum-number bad">${data.total}</div></div>
+        <div class="sum-col"><div class="sum-label">REJECTION RATE</div><div class="sum-number">${data.rate}</div></div>
     </div>
-    
     <div class="prev-table-wrap">
-        <table class="p-table">
-            <thead><tr><th>Defect Type</th><th>Ref ID</th><th>Qty</th><th>%</th><th>Analysis</th><th>Image</th></tr></thead>
-            <tbody>
-    `;
+        <table class="p-table"><thead><tr><th>Defect Type</th><th>Ref ID</th><th>Qty</th><th>%</th><th>Analysis</th><th>Image</th></tr></thead>
+        <tbody>`;
     data.defects.forEach(d => {
         let img = d.img ? `<img src="${d.img}" style="height:30px; border-radius:4px; cursor:zoom-in" onclick="window.open(this.src)">` : '<span style="color:#ccc">No Img</span>';
         html += `<tr><td><span class="badge">${d.name}</span></td><td>${d.ref||'-'}</td><td><b>${d.qty}</b></td><td>${d.rate}</td><td>${d.ana||'-'}</td><td>${img}</td></tr>`;
     });
     html += `</tbody></table></div>`;
     document.getElementById('previewBody').innerHTML = html;
-    
     let ft = document.getElementById('previewFooter');
     if(!isReadOnly) ft.innerHTML = `<button class="btn-gray" onclick="closeModal()">Edit</button><button class="btn-green" onclick="saveData()">✅ Submit Data</button>`;
     else ft.innerHTML = `<button class="btn-gray" onclick="closeModal()">Close</button>`;
@@ -612,7 +595,6 @@ function renderPreviewModal(data, isReadOnly=false){
 }
 function closeModal() { document.getElementById('previewModal').style.display = "none"; }
 
-// --- SAVE & LOAD ---
 async function saveData(){
   if(!API_URL.includes("script.google.com")){ alert("Please setup API URL!"); return; }
   closeModal(); document.getElementById('loader').style.display = 'block';
@@ -625,7 +607,6 @@ async function loadAllData(){
   try { let res = await fetch(API_URL); rawData = await res.json(); switchCategory("Earbuds"); } catch(e) { console.log(e); }
 }
 
-// --- DASHBOARD ---
 function renderDash(){
   let from = document.getElementById('dash_from').value; let to = document.getElementById('dash_to').value || from;
   let tBody = document.getElementById('dash_table'); tBody.innerHTML = "";
@@ -648,7 +629,6 @@ function renderDash(){
   document.getElementById('k_f2').innerText = rate(stats.f2_d, stats.f2_i);
   document.getElementById('k_fb').innerText = rate(stats.fb_d, stats.fb_i);
   
-  // Charts
   let mA = [['Model','Defects',{role:'annotation'}]], dA = [['Defect','Qty',{role:'annotation'}]];
   Object.keys(mMode).sort((a,b)=>mMode[b].d-mMode[a].d).slice(0,5).forEach(k=>mA.push([k,mMode[k].d,mMode[k].d]));
   Object.keys(mDef).sort((a,b)=>mDef[b]-mDef[a]).slice(0,5).forEach(k=>dA.push([k,mDef[k],mDef[k]]));
@@ -665,7 +645,6 @@ function editRow(idx, r){
   try{ JSON.parse(r[7]).forEach(d=>addDefectRow(d)); }catch(e){ addDefectRow(); } calcTotal();
 }
 
-// --- REPORTS ---
 function makeEditable(id) {
     document.querySelectorAll(`#${id} .analysis-item p`).forEach(p => {
         p.contentEditable = "true"; p.style.borderBottom = "1px dashed #ccc"; p.title = "Click to Edit";
@@ -693,6 +672,15 @@ function genModelReport(){
     document.getElementById('model_print_area').style.display = 'block';
     processReportData(rData, 'm_inp', 'm_def', 'm_rate_val', 'm_trend_chart', 'm_pareto_chart', 'm_analysis_list', 'm_remaining_list');
     makeEditable('m_analysis_list');
+    
+    // POPULATE EXCEL TABLE FOR MODEL
+    let xlsHtml = "";
+    rData.forEach(r => {
+        try { JSON.parse(r[7]).forEach(d => {
+            xlsHtml += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.ref||''}</td><td>${d.analysis||''}</td></tr>`;
+        }); } catch(e){}
+    });
+    document.getElementById('excel_body').innerHTML = xlsHtml;
 }
 
 function genDefectWiseReport(){
@@ -702,6 +690,7 @@ function genDefectWiseReport(){
     document.getElementById('d_subtitle').innerText = `${s} to ${e}`;
     let rData = currentData.filter(r => r[0] >= s && r[0] <= e);
     let mStats = {}, totQty = 0, anaList = [];
+    let xlsHtml = "";
     
     rData.forEach(r => {
         try { JSON.parse(r[7]).forEach(d => {
@@ -710,6 +699,9 @@ function genDefectWiseReport(){
                 if(!mStats[r[2]]) mStats[r[2]] = {i:0, q:0};
                 mStats[r[2]].i += (+r[3]); mStats[r[2]].q += q;
                 if(d.analysis) anaList.push({m:r[2], a:d.analysis, ac:d.action});
+                
+                // ADD TO EXCEL TABLE
+                xlsHtml += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.analysis||''}</td></tr>`;
             }
         }); } catch(e){}
     });
@@ -723,7 +715,9 @@ function genDefectWiseReport(){
     });
     document.getElementById('defect_detail_body').innerHTML = tblHtml;
     document.getElementById('d_analysis_list').innerHTML = anaList.map(x => `<div class="analysis-item"><h5>${x.m}</h5><p contenteditable="true">${x.a}</p></div>`).join("");
+    document.getElementById('defect_excel_body').innerHTML = xlsHtml; // Populate hidden table
     document.getElementById('defect_print_area').style.display='block';
+    
     chartInstances['Defect'] = new google.visualization.ColumnChart(document.getElementById('d_contrib_chart'));
     chartInstances['Defect'].draw(google.visualization.arrayToDataTable(chartData), {legend:'none', colors:['#E36C09']});
 }
@@ -739,6 +733,20 @@ function genMonthReport() {
     processReportData(rData, 'mo_inp', 'mo_def', 'mo_rate', 'mo_trend_chart', 'mo_pareto_chart', 'mo_analysis_list', null, 'mo_model_chart');
     makeEditable('mo_analysis_list');
     
+    // POPULATE EXCEL TABLE FOR MONTH
+    let xlsHtml = "";
+    rData.forEach(r => {
+        let defects = []; try { defects = JSON.parse(r[7]); } catch(e){}
+        if(defects.length === 0) {
+            xlsHtml += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>-</td><td>0</td><td>-</td><td>-</td></tr>`;
+        } else {
+            defects.forEach(d => {
+                xlsHtml += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.ref||''}</td><td>${d.analysis||''}</td></tr>`;
+            });
+        }
+    });
+    document.getElementById('month_excel_body').innerHTML = xlsHtml;
+
     chartInstances['Month_Trend'] = new google.visualization.LineChart(document.getElementById('mo_trend_chart'));
     chartInstances['Month_Model'] = new google.visualization.ColumnChart(document.getElementById('mo_model_chart'));
     chartInstances['Month_Pareto'] = new google.visualization.ColumnChart(document.getElementById('mo_pareto_chart'));
@@ -790,10 +798,17 @@ function processReportData(rData, inpId, defId, rateId, trendId, paretoId, anaId
   }
 }
 
-// --- EXPORTS ---
 function downloadPDF(id, name){
     let opt = { margin: 10, filename: name, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
     html2pdf().from(document.getElementById(id)).set(opt).save();
+}
+
+function downloadExcel(id, name){
+    let html = document.getElementById(id).outerHTML;
+    let link = document.createElement("a"); 
+    link.download = name; 
+    link.href = 'data:application/vnd.ms-excel,' + escape(html); 
+    link.click();
 }
 
 function downloadProfessionalPPT(type) {
@@ -830,14 +845,12 @@ function downloadProfessionalPPT(type) {
         s2.addText("Rejection Rate", { x: 9, y: 2, w: 3, align: 'center', fontSize: 14 });
         s2.addText(rate, { x: 9, y: 2.5, w: 3, align: 'center', fontSize: 32, bold: true, color: "E36C09" });
 
-        // SLIDE 3: Charts
         let s3 = pptx.addSlide();
         s3.addImage({ path: LOGO_URL, x: 11, y: 0.3, w: 1.5, h: 0.6 });
         s3.addText("Trend & Pareto Analysis", { x: 0.5, y: 0.5, fontSize: 18, color: "002060" });
         try { if(chartInstances['mo_trend']) s3.addImage({ data: chartInstances['mo_trend'].getImageURI(), x: 0.5, y: 1, w: 6, h: 3 }); } catch(e){}
         try { if(chartInstances['mo_pareto']) s3.addImage({ data: chartInstances['mo_pareto'].getImageURI(), x: 7, y: 1, w: 6, h: 3 }); } catch(e){}
         
-        // SLIDE 4: Model Analysis
         let s4 = pptx.addSlide();
         s4.addImage({ path: LOGO_URL, x: 11, y: 0.3, w: 1.5, h: 0.6 });
         s4.addText("Model Wise Breakdown", { x: 0.5, y: 0.5, fontSize: 18, color: "002060" });
@@ -849,7 +862,6 @@ function downloadProfessionalPPT(type) {
         s3.addText("Defect Contribution", { x: 0.5, y: 0.5, fontSize: 18, color: "002060" });
         try { if(chartInstances['Defect']) s3.addImage({ data: chartInstances['Defect'].getImageURI(), x: 1, y: 1.5, w: 10, h: 4 }); } catch(e){}
     }
-
     pptx.writeFile({ fileName: `Califonix_${type}_Report.pptx` });
 }
 </script>
