@@ -3,93 +3,125 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SMT Rejection Outlook</title>
+<title>SMT Rejection Outlook - Califonix</title>
 <script src="https://www.gstatic.com/charts/loader.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
 <style>
-  body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
+  :root { --primary: #002060; --secondary: #E36C09; --light: #f4f6f9; --white: #ffffff; }
+  body { font-family: 'Segoe UI', 'Roboto', sans-serif; background: var(--light); margin: 0; padding: 20px; color: #333; }
   
-  /* HEADER & LAYOUT */
-  .main-header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; max-width: 1200px; margin-left: auto; margin-right: auto; }
+  /* HEADER */
+  .main-header { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 25px; max-width: 1200px; margin-left: auto; margin-right: auto; border-left: 6px solid var(--primary); }
   .header-left { display: flex; align-items: center; }
-  .main-logo { height: 50px; margin-right: 20px; }
-  .main-title h2 { margin: 0; color: #003366; }
-  .main-title p { margin: 0; color: #666; font-size: 12px; }
+  .main-logo { height: 45px; margin-right: 20px; }
+  .main-title h2 { margin: 0; color: var(--primary); font-weight: 800; letter-spacing: 0.5px; }
+  .main-title p { margin: 0; color: #666; font-size: 13px; font-weight: 500; }
   
   /* CATEGORY SELECTOR */
-  .category-select { padding: 8px; border-radius: 4px; border: 1px solid #003366; color: #003366; font-weight: bold; cursor: pointer; background: #eef; }
+  .category-select { padding: 10px; border-radius: 6px; border: 2px solid var(--primary); color: var(--primary); font-weight: bold; cursor: pointer; background: #eef4ff; outline: none; }
 
-  .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  .container { max-width: 1200px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
   
-  .nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; flex-wrap: wrap; }
-  button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; transition: 0.2s; }
-  button:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn-blue { background: #007bff; color: white; }
-  .btn-green { background: #28a745; color: white; }
-  .btn-gray { background: #6c757d; color: white; }
-  .btn-red { background: #dc3545; color: white; padding: 5px 10px; font-size: 12px;}
-  .btn-info { background: #17a2b8; color: white; padding: 5px 10px; font-size: 12px; }
-  .btn-purple { background: #6f42c1; color: white; }
-  .btn-orange { background: #fd7e14; color: white; }
+  /* NAV BUTTONS */
+  .nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; flex-wrap: wrap; }
+  button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); opacity: 0.95; }
+  .btn-blue { background: #0056b3; color: white; }
+  .btn-green { background: #218838; color: white; }
+  .btn-gray { background: #5a6268; color: white; }
+  .btn-red { background: #c82333; color: white; padding: 6px 12px; font-size: 12px;}
+  .btn-info { background: #138496; color: white; padding: 6px 12px; font-size: 12px; }
+  .btn-purple { background: #6610f2; color: white; }
+  .btn-orange { background: var(--secondary); color: white; }
+  .btn-dark { background: #23272b; color: white; }
 
-  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
-  label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 12px; color: #555; }
-  input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; background: #fafafa; }
-  input:focus, select:focus { border-color: #007bff; outline: none; background: #fff; }
-  input[readonly] { background-color: #e9ecef; color: #495057; font-weight: bold; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+  label { display: block; font-weight: 700; margin-bottom: 6px; font-size: 13px; color: #444; }
+  input, select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; background: #fdfdfd; transition: 0.3s; }
+  input:focus, select:focus { border-color: var(--primary); outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(0,32,96,0.1); }
+  input[readonly] { background-color: #e9ecef; }
 
-  .defect-row { border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 10px; border-radius: 6px; background: #fff; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr 2fr 1fr 0.5fr; gap: 10px; align-items: end; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+  /* DEFECT ROWS */
+  .defect-row { border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 10px; border-radius: 8px; background: #fff; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 2fr 2fr 1fr 0.5fr; gap: 10px; align-items: end; box-shadow: 0 2px 8px rgba(0,0,0,0.03); transition: 0.2s; }
+  .defect-row:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-color: #b3d7ff; }
   .img-preview { height: 40px; display: none; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
 
-  .kpi-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;}
-  .kpi-card { flex: 1; min-width: 150px; background: #fff; padding: 20px; border-radius: 8px; text-align: center; border-bottom: 4px solid #007bff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-  .kpi-card div:first-child { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-  .kpi-val { font-size: 28px; font-weight: bold; margin-top: 5px; color: #333; }
+  /* KPI CARDS */
+  .kpi-container { display: flex; gap: 20px; margin-bottom: 25px; flex-wrap: wrap;}
+  .kpi-card { flex: 1; min-width: 160px; background: #fff; padding: 20px; border-radius: 10px; text-align: center; border-bottom: 5px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: transform 0.3s; }
+  .kpi-card:hover { transform: translateY(-5px); }
+  .kpi-card div:first-child { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .kpi-val { font-size: 32px; font-weight: 800; margin-top: 5px; color: #222; }
 
-  /* REPORT STYLES */
-  .report-box { width: 1050px !important; margin: 0 auto; border: 1px solid #ddd; padding: 30px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 0 15px rgba(0,0,0,0.1); overflow: hidden; }
-  .chart-stacked { display: block; width: 100%; margin-bottom: 30px; page-break-inside: avoid !important; break-inside: avoid !important; }
-  .chart-full { width: 100%; height: 320px; border: 1px solid #eee; padding: 10px; background: #fff; }
+  /* REPORT & CHARTS */
+  .report-box { width: 1050px !important; margin: 0 auto; border: none; padding: 40px; display: none; margin-top: 20px; background: #fff; box-shadow: 0 5px 25px rgba(0,0,0,0.1); overflow: hidden; border-radius: 8px; }
+  .chart-stacked { display: block; width: 100%; margin-bottom: 30px; page-break-inside: avoid !important; }
+  .chart-full { width: 100%; height: 350px; border: 1px solid #eee; padding: 15px; background: #fff; border-radius: 8px; }
   .chart-row { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
-  .chart-box { flex: 1; min-width: 300px; border: 1px solid #eee; padding: 10px; background: #fff; }
+  .chart-box { flex: 1; min-width: 300px; border: 1px solid #eee; padding: 15px; background: #fff; border-radius: 8px; height: 350px; }
 
-  .analysis-item { display: flex; border: 1px solid #eee; padding: 15px; margin-bottom: 10px; gap: 15px; background: #fdfdfd; border-left: 4px solid #007bff; }
-  .analysis-img { width: 100px; height: 100px; object-fit: contain; border: 1px solid #eee; background: white; cursor: pointer; }
+  .analysis-item { position: relative; display: flex; border: 1px solid #f0f0f0; padding: 15px; margin-bottom: 12px; gap: 15px; background: #fdfdfd; border-left: 5px solid var(--primary); border-radius: 4px; }
+  .edit-icon { position: absolute; right: 10px; top: 10px; cursor: pointer; color: #999; font-size: 14px; }
+  .edit-icon:hover { color: var(--primary); }
   
-  .rem-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-  .rem-table tr { page-break-inside: avoid; break-inside: avoid; }
-  .rem-table th, .rem-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-  .rem-table th { background: #343a40; color: white; }
+  /* TABLES */
+  .rem-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .rem-table th, .rem-table td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
+  .rem-table th { background: #343a40; color: white; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
 
-  /* THEME OVERRIDES FOR CASE */
-  .theme-case th { background: #E36C09 !important; }
-  .theme-case .main-title h2 { color: #E36C09 !important; }
-  .theme-case .kpi-card { border-bottom-color: #E36C09 !important; }
-  .theme-case .analysis-item { border-left-color: #E36C09 !important; }
+  /* MULTI SELECT CSS */
+  .multiselect { width: 100%; position: relative; }
+  .selectBox { position: relative; cursor: pointer; }
+  .selectBox select { width: 100%; font-weight: bold; }
+  .overSelect { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+  #checkboxes { display: none; border: 1px solid #ccc; max-height: 200px; overflow-y: scroll; position: absolute; width: 100%; background: white; z-index: 100; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 0 0 6px 6px; }
+  #checkboxes label { display: block; padding: 8px; margin: 0; font-weight: normal; cursor: pointer; border-bottom: 1px solid #eee; }
+  #checkboxes label:hover { background-color: #e9ecef; }
+  #checkboxes input { width: auto; margin-right: 10px; }
 
-  /* PREVIEW MODAL */
-  .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
-  .modal-content { background-color: #fff; margin: 2% auto; padding: 0; border: none; width: 90%; max-width: 850px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); overflow: hidden; }
-  .prev-header { background: #003366; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
-  .close { color: white; font-size: 28px; font-weight: bold; cursor: pointer; }
-  .prev-body { padding: 25px; }
-  .info-box { background: #f8f9fa; padding: 10px; border-radius: 5px; border-left: 4px solid #003366; }
-  .summary-sec { display: flex; justify-content: space-between; background: #e8f0fe; padding: 15px; border-radius: 6px; margin-bottom: 25px; border: 1px solid #b3d7ff; }
-  .sum-item { text-align: center; flex: 1; border-right: 1px solid #ccc; }
-  .prev-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .prev-table th { background: #343a40; color: white; padding: 10px; text-align: left; }
-  .prev-footer { background: #f1f1f1; padding: 15px 25px; text-align: right; border-top: 1px solid #ddd; }
+  /* PREVIEW MODAL (ATTRACTIVE) */
+  .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+  .modal-content { background-color: #fff; margin: 3% auto; padding: 0; border: none; width: 85%; max-width: 900px; border-radius: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); overflow: hidden; animation: slideIn 0.3s ease-out; }
+  @keyframes slideIn { from {transform: translateY(-50px); opacity: 0;} to {transform: translateY(0); opacity: 1;} }
   
-  #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1001; text-align: center; padding-top: 200px; font-size: 20px; font-weight: bold; color: #007bff; }
+  .prev-header { background: linear-gradient(135deg, var(--primary), #004080); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+  .prev-header h3 { margin: 0; font-family: 'Segoe UI', sans-serif; font-weight: 300; letter-spacing: 1px; }
+  .close { color: rgba(255,255,255,0.7); font-size: 30px; cursor: pointer; transition: 0.2s; }
+  .close:hover { color: white; transform: scale(1.1); }
+  
+  .prev-body { padding: 30px; background: #fafbfc; }
+  
+  .prev-grid-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
+  .prev-card { background: white; padding: 15px; border-radius: 8px; border-left: 4px solid var(--secondary); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+  .prev-card span { display: block; font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+  .prev-card strong { font-size: 16px; color: #333; }
+
+  .summary-sec { display: flex; background: white; border-radius: 10px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #eee; }
+  .sum-item { flex: 1; padding: 20px; text-align: center; border-right: 1px solid #eee; }
+  .sum-item:last-child { border-right: none; }
+  .sum-lbl { font-size: 12px; color: #666; margin-bottom: 5px; font-weight: 600; }
+  .sum-val { font-size: 24px; font-weight: 800; color: var(--primary); }
+  .sum-val.danger { color: #dc3545; }
+
+  .prev-table-container { border-radius: 8px; overflow: hidden; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.03); background: white; }
+  .prev-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .prev-table th { background: #f1f3f5; color: #495057; padding: 12px 15px; text-align: left; font-weight: 700; }
+  .prev-table td { padding: 12px 15px; border-bottom: 1px solid #f1f1f1; color: #555; vertical-align: middle; }
+  .prev-table tr:last-child td { border-bottom: none; }
+  .tag { background: #e9ecef; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: #495057; }
+  
+  .prev-footer { background: #fff; padding: 20px 30px; text-align: right; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+  
+  #loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 1001; text-align: center; padding-top: 200px; font-size: 24px; font-weight: bold; color: var(--primary); }
   
   .category-switch { display: flex; justify-content: center; margin-bottom: 25px; }
   .cat-btn { padding: 12px 40px; border: 1px solid #ccc; background: #e9ecef; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; flex: 1; max-width: 250px; text-align: center; color: #555; }
   .cat-btn:first-child { border-radius: 30px 0 0 30px; border-right: none; }
   .cat-btn:last-child { border-radius: 0 30px 30px 0; border-left: none; }
-  .cat-btn.active-buds { background: #003366; color: white; border-color: #003366; }
-  .cat-btn.active-case { background: #E36C09; color: white; border-color: #E36C09; }
+  .cat-btn.active-buds { background: var(--primary); color: white; border-color: var(--primary); }
+  .cat-btn.active-case { background: var(--secondary); color: white; border-color: var(--secondary); }
 </style>
 </head>
 <body>
@@ -98,13 +130,16 @@
 
 <div class="main-header">
     <div class="header-left">
-        <img src="https://i.postimg.cc/5y7SN4xc/logo.png" class="main-logo" alt="Logo">
-        <div class="main-title">
+        <!-- CALIFONIX LOGO PLACEHOLDER -->
+        <div style="display:flex; flex-direction:column; justify-content:center; margin-right:15px;">
+           <h1 style="margin:0; font-size:28px; font-style:italic; color:#002060; font-weight:900;">CALIFONIX</h1>
+           <span style="font-size:10px; letter-spacing:2px; color:#E36C09; text-align:right;">TECH INNOVATIONS</span>
+        </div>
+        <div class="main-title" style="border-left:2px solid #ddd; padding-left:15px; margin-left:10px;">
             <h2>SMT Rejection Outlook</h2>
             <p>Production Quality Control System</p>
         </div>
     </div>
-    <!-- SIMPLE CATEGORY SWITCH -->
     <div>
         <label>Select Category:</label>
         <select class="category-select" id="cat_select" onchange="switchCategory(this.value)">
@@ -116,14 +151,19 @@
 
 <div id="previewModal" class="modal">
   <div class="modal-content">
-    <div class="prev-header"><h3>Record Preview</h3><span class="close" onclick="closeModal()">&times;</span></div>
+    <div class="prev-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:24px;">📊</span>
+            <h3>Data Entry Preview</h3>
+        </div>
+        <span class="close" onclick="closeModal()">&times;</span>
+    </div>
     <div class="prev-body" id="previewBody"></div>
     <div class="prev-footer" id="previewFooter"></div>
   </div>
 </div>
 
 <div class="container">
-  <!-- CATEGORY TOGGLE (Same UI) -->
   <div class="category-switch">
       <div id="btn_earbuds" class="cat-btn active-buds" onclick="switchCategory('Earbuds')">🎧 Earbuds Dashboard</div>
       <div id="btn_case" class="cat-btn" onclick="switchCategory('ChargingCase')">🔋 Charging Case Dashboard</div>
@@ -134,7 +174,8 @@
     <button class="btn-gray" onclick="showPage('entry')">Data Entry</button>
     <button class="btn-green" onclick="showPage('report')">Overall Report</button>
     <button class="btn-purple" onclick="showPage('model_report')">Model Report</button>
-    <button class="btn-orange" onclick="showPage('defect_report')">Defect Wise Report</button>
+    <button class="btn-orange" onclick="showPage('defect_report')">Defect Report</button>
+    <button class="btn-dark" onclick="showPage('month_report')">📅 Month Wise</button>
   </div>
 
   <!-- 1. DASHBOARD -->
@@ -155,8 +196,8 @@
         <div class="chart-box" id="dash_chart_defect" style="height:350px;"></div>
     </div>
     <div style="overflow-x:auto;">
-      <table border="1" style="width:100%; border-collapse:collapse; border-color:#eee; font-size:14px;">
-        <thead><tr style="background:#003366; color:white;"><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defects</th><th>Rej %</th><th>Action</th></tr></thead>
+      <table border="1" style="width:100%; border-collapse:collapse; border-color:#eee; font-size:14px; text-align:center;">
+        <thead><tr style="background:var(--primary); color:white; height:40px;"><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defects</th><th>Rej %</th><th>Action</th></tr></thead>
         <tbody id="dash_table"></tbody>
       </table>
     </div>
@@ -166,24 +207,17 @@
   <div id="entry" style="display:none;">
     <h3>📝 Add / Edit Record</h3>
     <input type="hidden" id="edit_index"><input type="hidden" id="edit_sheet_name">
-    
     <div class="form-grid">
       <div><label>Date</label><input type="date" id="e_date"></div>
-      <div>
-        <label>Shift</label>
-        <select id="e_shift"><option value="A">Shift A</option><option value="B">Shift B</option><option value="C">Shift C</option></select>
-      </div>
+      <div><label>Shift</label><select id="e_shift"><option value="A">Shift A</option><option value="B">Shift B</option><option value="C">Shift C</option></select></div>
       <div><label>Line</label><input type="number" id="e_line" placeholder="1-24"></div>
-      <!-- CHANGED TO SELECT DROPDOWN -->
       <div><label>Model</label><select id="e_model"><option value="">Select Model</option></select></div>
       <div><label>Input Qty</label><input type="number" id="e_input" oninput="calcTotal()"></div>
       <div><label>Operator/Prep By</label><input type="text" id="e_prep"></div>
     </div>
-
-    <h4 style="margin-bottom:10px; color:#003366;">Defect Details</h4>
+    <h4 style="margin-bottom:10px; color:var(--primary);">Defect Details</h4>
     <div id="defect_wrapper"></div>
     <button class="btn-gray" onclick="addDefectRow()">+ Add Defect</button>
-
     <div style="margin-top:20px; padding:20px; background:#e8f0fe; border-radius:8px; border:1px solid #b3d7ff;">
        <h4 style="margin-top:0;">Summary</h4>
        <div class="form-grid">
@@ -207,8 +241,8 @@
       </div>
     </div>
     <div id="print_area" class="report-box">
-      <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
-          <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;">
+      <div style="display:flex; justify-content:space-between; border-bottom:2px solid var(--primary); padding-bottom:15px; margin-bottom:20px;">
+          <h1 style="color:var(--primary); margin:0;">CALIFONIX</h1>
           <div style="text-align:right;"><h2 style="margin:0;">OVERALL ANALYSIS</h2><p style="margin:0;" id="r_subtitle">--</p></div>
       </div>
       <table style="width:100%; border:1px solid #000; margin-bottom:20px; text-align:center;">
@@ -217,8 +251,8 @@
       <div class="chart-stacked"><div class="chart-full" id="trend_chart_div"></div></div>
       <div class="chart-stacked"><div class="chart-full" id="model_chart_div"></div></div>
       <div class="chart-stacked"><div class="chart-full" id="pareto_chart_div"></div></div>
-      <h4 style="border-bottom:2px solid #333;">🏆 Top 5 Defects Analysis</h4><div id="analysis_list"></div>
-      <h4 style="border-bottom:2px solid #333; margin-top:30px;">📉 Remaining Defects</h4><table class="rem-table"><thead><tr><th>Defect Name</th><th>Qty</th><th>Input (Ref)</th><th>Rate %</th></tr></thead><tbody id="remaining_list"></tbody></table>
+      <h4 style="border-bottom:2px solid #333;">🏆 Top 5 Defects Analysis <small>(Click text to edit)</small></h4><div id="analysis_list"></div>
+      <h4 style="border-bottom:2px solid #333; margin-top:30px;">📉 Remaining Defects</h4><table class="rem-table"><tbody id="remaining_list"></tbody></table>
     </div>
   </div>
 
@@ -226,7 +260,17 @@
     <div class="form-grid no-print">
       <div><label>From</label><input type="date" id="m_date_start"></div>
       <div><label>To</label><input type="date" id="m_date_end"></div>
-      <div><label>Select Model</label><select id="m_model_select"></select></div>
+      <!-- MULTI SELECT -->
+      <div>
+        <label>Select Models (Multi)</label>
+        <div class="multiselect">
+            <div class="selectBox" onclick="showCheckboxes()">
+                <select><option>Select Models</option></select>
+                <div class="overSelect"></div>
+            </div>
+            <div id="checkboxes"></div>
+        </div>
+      </div>
       <div style="display:flex; align-items:end; gap:10px;">
         <button class="btn-purple" onclick="genModelReport()">View</button>
         <button class="btn-green" onclick="downloadPDF('model_print_area', 'Model_Report.pdf')">PDF</button>
@@ -234,18 +278,18 @@
       </div>
     </div>
     <div id="model_print_area" class="report-box">
-      <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
-          <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;">
+      <div style="display:flex; justify-content:space-between; border-bottom:2px solid var(--primary); padding-bottom:15px; margin-bottom:20px;">
+          <h1 style="color:var(--primary); margin:0;">CALIFONIX</h1>
           <div style="text-align:right;"><h2 style="margin:0;">MODEL REPORT</h2><p style="margin:0;" id="m_subtitle">--</p></div>
       </div>
       <table style="width:100%; border:1px solid #000; margin-bottom:20px; text-align:center; background:#f8f9fa;">
-        <tr><td style="padding:10px;"><b>Model:</b> <span id="m_name_disp" style="color:blue">--</span></td><td style="padding:10px;"><b>Input:</b> <span id="m_inp">0</span></td><td style="padding:10px;"><b>Defect:</b> <span id="m_def">0</span></td><td style="padding:10px;"><b>Rej %:</b> <span id="m_rate_val" style="color:red">0%</span></td></tr>
+        <tr><td style="padding:10px;"><b>Models:</b> <span id="m_name_disp" style="color:blue">--</span></td><td style="padding:10px;"><b>Input:</b> <span id="m_inp">0</span></td><td style="padding:10px;"><b>Defect:</b> <span id="m_def">0</span></td><td style="padding:10px;"><b>Rej %:</b> <span id="m_rate_val" style="color:red">0%</span></td></tr>
       </table>
       <div class="chart-stacked"><div class="chart-full" id="m_trend_chart"></div></div>
       <div class="chart-stacked"><div class="chart-full" id="m_pareto_chart"></div></div>
-      <h4 style="border-bottom:2px solid #333;">🏆 Top Defects</h4><div id="m_analysis_list"></div>
-      <table class="rem-table"><thead><tr><th>Defect</th><th>Qty</th><th>Rate %</th></tr></thead><tbody id="m_remaining_list"></tbody></table>
-      <table id="excel_table" style="display:none;"><thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defect Name</th><th>Ref ID</th><th>Qty</th><th>Defect %</th><th>Analysis</th><th>Action Taken</th></tr></thead><tbody id="excel_body"></tbody></table>
+      <h4 style="border-bottom:2px solid #333;">🏆 Top Defects (Editable)</h4><div id="m_analysis_list"></div>
+      <table class="rem-table"><tbody id="m_remaining_list"></tbody></table>
+      <table id="excel_table" style="display:none;"><tbody id="excel_body"></tbody></table>
     </div>
   </div>
 
@@ -257,13 +301,12 @@
       <div style="display:flex; align-items:end; gap:5px;">
         <button class="btn-orange" onclick="genDefectWiseReport()">Generate</button>
         <button class="btn-green" onclick="downloadPDF('defect_print_area', 'Defect_Report.pdf')">PDF</button>
-        <button class="btn-info" onclick="downloadExcel('defect_excel_table', 'Defect_Report.xls')">Excel</button>
-        <button class="btn-purple" onclick="downloadPPT()">PPT</button>
+        <button class="btn-purple" onclick="downloadProfessionalPPT('Defect')">PPT</button>
       </div>
     </div>
     <div id="defect_print_area" class="report-box">
-      <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
-          <img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;">
+      <div style="display:flex; justify-content:space-between; border-bottom:2px solid var(--primary); padding-bottom:15px; margin-bottom:20px;">
+          <h1 style="color:var(--primary); margin:0;">CALIFONIX</h1>
           <div style="text-align:right;"><h2 style="margin:0;">DEFECT ANALYSIS</h2><p style="margin:0;" id="d_subtitle">--</p></div>
       </div>
       <table style="width:100%; border:1px solid #000; margin-bottom:20px; text-align:center; background:#fff3cd;">
@@ -271,10 +314,46 @@
       </table>
       <div class="chart-stacked"><div class="chart-full" id="d_contrib_chart"></div></div>
       <h4 style="border-bottom:2px solid #333;">🔍 Analysis & Actions</h4><div id="d_analysis_list"></div>
-      <h4 style="border-bottom:2px solid #333; margin-top:20px;">📋 Detailed Breakdown</h4>
-      <table class="rem-table" id="defect_detail_table"><thead><tr><th>Model</th><th>Input</th><th>Defect Qty</th><th>Rate %</th></tr></thead><tbody id="defect_detail_body"></tbody></table>
-      <table id="defect_excel_table" style="display:none;"><thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defect</th><th>Qty</th><th>Rate %</th><th>Analysis</th></tr></thead><tbody id="defect_excel_body"></tbody></table>
+      <table class="rem-table" id="defect_detail_table"><tbody id="defect_detail_body"></tbody></table>
+      <table id="defect_excel_table" style="display:none;"><tbody id="defect_excel_body"></tbody></table>
     </div>
+  </div>
+
+  <!-- 4. MONTH WISE REPORT -->
+  <div id="month_report" style="display:none;">
+      <div class="form-grid no-print">
+          <div><label>Select Month</label><input type="month" id="mo_picker"></div>
+          <div style="display:flex; align-items:end; gap:10px;">
+              <button class="btn-dark" onclick="genMonthReport()">Load Dashboard</button>
+              <button class="btn-green" onclick="downloadPDF('month_print_area', 'Monthly_Report.pdf')">PDF</button>
+              <button class="btn-purple" onclick="downloadProfessionalPPT('Month')">Professional PPT</button>
+          </div>
+      </div>
+      <div id="month_print_area" class="report-box">
+          <div style="display:flex; justify-content:space-between; border-bottom:3px solid var(--secondary); padding-bottom:15px; margin-bottom:20px;">
+            <h1 style="color:var(--primary); margin:0; font-style:italic;">CALIFONIX</h1>
+            <div style="text-align:right;"><h2 style="margin:0; color:#333;">MONTHLY PERFORMANCE</h2><p style="margin:0;" id="mo_subtitle">--</p></div>
+          </div>
+          
+          <!-- Summary Cards -->
+          <div style="display:flex; gap:15px; margin-bottom:30px;">
+              <div class="kpi-card" style="border-bottom-color:var(--primary);"><div>Total Input</div><div class="kpi-val" id="mo_inp">0</div></div>
+              <div class="kpi-card" style="border-bottom-color:#dc3545;"><div>Total Defects</div><div class="kpi-val" id="mo_def">0</div></div>
+              <div class="kpi-card" style="border-bottom-color:var(--secondary);"><div>Rejection %</div><div class="kpi-val" id="mo_rate">0%</div></div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="chart-row">
+              <div class="chart-box" style="width:100%;"><div id="mo_trend_chart" style="width:100%; height:300px;"></div></div>
+          </div>
+          <div class="chart-row">
+            <div class="chart-box"><div id="mo_model_chart" style="width:100%; height:300px;"></div></div>
+            <div class="chart-box"><div id="mo_pareto_chart" style="width:100%; height:300px;"></div></div>
+          </div>
+          
+          <h3 style="border-left:5px solid var(--primary); padding-left:10px; margin-top:30px;">Analysis Overview (Editable)</h3>
+          <div id="mo_analysis_list"></div>
+      </div>
   </div>
 
 </div>
@@ -282,54 +361,37 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbweFBgyW1LR3SLr0wHrt_dUXRXmN1qGwNjbmhcmCTLMzjm3wjTeNA1wofzAz801zEvmng/exec";
 
-// --- FULL MODEL LIST ---
+// --- MASTER LISTS ---
 const MASTER_MODELS = [
-    "Ad Unity ANC", "Ace", "Ad 111v2", "Ad 118", "Ad 120", "Ad 121Pro Plus",
-    "Ad 131 Elite Anc", "Ad 131 Gen 2", "Ad 131 Pro Buds", "Ad 138 Gen 2",
-    "Ad 141 Anc", "Ad 141 Anc Elite", "Ad 141 Gen 2", "Ad 141 Pro Buds",
-    "Ad 148 Gen 2", "Ad 155", "Ad 161 Anc", "Ad 161 Anc Elite", "Ad 161 N",
-    "Ad 181 Pro", "Ad 191 Anc", "Ad 192", "Ad 212", "Ad 213", "Ad 280 Anc",
-    "Ad 300", "Ad 301", "Ad 311 Pro", "Ad 313", "Ad 701 Anc", "AD 71",
-    "Ad 800", "Ad 800 Hidef", "Ad 91", "Ad 91 Prime", "Ad Ace Gen 2",
-    "Ad Alpha Gen 2", "AD Hype", "AD Kick", "Ad Nirvana Crystal",
-    "Ad Nirvana Iris", "Ad Nirvana X", "Ad Plus 311", "Ad Plus 318",
-    "Ad Prime 412", "Ad Prime 513 Anc", "Ad Primo", "Ad Pulse",
-    "AD Supreme", "Ad Ultra Pro", "Ad100", "Ad121 Pro", "Ad125",
-    "Ad131", "Ad131 Pro", "Ad138", "Ad138 Pro", "Ad141", "Ad148",
-    "Ad161", "AD161 Pro-Buds", "AD163", "Ad170", "AD181", "AD183",
-    "Ad190", "AD191 G", "Airdopes 207", "Alpha", "Amazon basics",
-    "Atom 81 Pro", "Atom 83", "Atom81", "Dashcam Hive E1",
-    "Dashcam Hive F1", "HMD P50", "HMD P60", "HMD P70", "HMD S60",
-    "HMD X50", "HMD X50 Pro", "IMT 100", "IMT101", "IMT121",
-    "IMT128", "IMT131", "IMT161", "IMT181", "Joy", "Max", "Nirvana",
-    "Nirvana Ion (ANC)", "Nirvana Ion ANC Pro", "Nirvana ION N Mold",
-    "R 195 Pro", "Ultra Plus", "Zing"
+    "Ad Unity ANC", "Ace", "Ad 111v2", "Ad 118", "Ad 120", "Ad 121Pro Plus", "Ad 131 Elite Anc", "Ad 131 Gen 2", 
+    "Ad 131 Pro Buds", "Ad 138 Gen 2", "Ad 141 Anc", "Ad 141 Anc Elite", "Ad 141 Gen 2", "Ad 141 Pro Buds",
+    "Ad 148 Gen 2", "Ad 155", "Ad 161 Anc", "Ad 161 Anc Elite", "Ad 161 N", "Ad 181 Pro", "Ad 191 Anc", "Ad 192", 
+    "Ad 212", "Ad 213", "Ad 280 Anc", "Ad 300", "Ad 301", "Ad 311 Pro", "Ad 313", "Ad 701 Anc", "AD 71",
+    "Ad 800", "Ad 800 Hidef", "Ad 91", "Ad 91 Prime", "Ad Ace Gen 2", "Ad Alpha Gen 2", "AD Hype", "AD Kick", 
+    "Ad Nirvana Crystal", "Ad Nirvana Iris", "Ad Nirvana X", "Ad Plus 311", "Ad Plus 318", "Ad Prime 412", 
+    "Ad Prime 513 Anc", "Ad Primo", "Ad Pulse", "AD Supreme", "Ad Ultra Pro", "Ad100", "Ad121 Pro", "Ad125",
+    "Ad131", "Ad131 Pro", "Ad138", "Ad138 Pro", "Ad141", "Ad148", "Ad161", "AD161 Pro-Buds", "AD163", "Ad170", 
+    "AD181", "AD183", "Ad190", "AD191 G", "Airdopes 207", "Alpha", "Amazon basics", "Atom 81 Pro", "Atom 83", 
+    "Atom81", "Dashcam Hive E1", "Dashcam Hive F1", "HMD P50", "HMD P60", "HMD P70", "HMD S60", "HMD X50", 
+    "HMD X50 Pro", "IMT 100", "IMT101", "IMT121", "IMT128", "IMT131", "IMT161", "IMT181", "Joy", "Max", 
+    "Nirvana", "Nirvana Ion (ANC)", "Nirvana Ion ANC Pro", "Nirvana ION N Mold", "R 195 Pro", "Ultra Plus", "Zing"
 ];
-
 const MASTER_DEFECTS = [
-    "Body Sensor Fail", "Single LED glow", "Channel Fail", "SMD Component damaged",
-    "DUT Mode Fail", "Electric sound", "Heating", "High Current", "Enquiry",
-    "LED Not glow", "LED Miss", "Low current", "Secondary MIC Fail", "Talk MIC Fail",
-    "Not On", "POGO Pin shift", "Software skip", "RF Fail", "CTC Fail",
+    "Body Sensor Fail", "Single LED glow", "Channel Fail", "SMD Component damaged", "DUT Mode Fail", 
+    "Electric sound", "Heating", "High Current", "Enquiry", "LED Not glow", "LED Miss", "Low current", 
+    "Secondary MIC Fail", "Talk MIC Fail", "Not On", "POGO Pin shift", "Software skip", "RF Fail", "CTC Fail", 
     "Speaker Fail", "Scrap", "Extra Burr", "Mic Distortion"
 ];
 
-// --- CONFIGURATION ---
 const CONFIG = {
-    Earbuds: {
-        defects: MASTER_DEFECTS,
-        models: MASTER_MODELS
-    },
-    ChargingCase: {
-        defects: MASTER_DEFECTS,
-        models: MASTER_MODELS
-    }
+    Earbuds: { defects: MASTER_DEFECTS, models: MASTER_MODELS },
+    ChargingCase: { defects: MASTER_DEFECTS, models: MASTER_MODELS }
 };
 
 let currentCategory = "Earbuds";
 let rawData = { earbuds: [], charging_case: [] }; 
 let currentData = []; 
-let lastDefectChart = null;
+let chartInstances = {}; // Store charts to get IMG URI for PPT
 
 google.charts.load('current', {'packages':['corechart', 'bar']});
 
@@ -337,65 +399,60 @@ window.onload = () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('e_date').value = today;
     document.getElementById('dash_from').value = today;
-    
-    // Initialize Category Selector
+    document.getElementById('mo_picker').value = today.substring(0, 7);
     document.getElementById('cat_select').value = "Earbuds";
-    
     loadAllData();
 };
 
-// --- SWITCH LOGIC ---
 function switchCategory(cat) {
     currentCategory = cat;
-    
-    // UI Updates
     document.getElementById('btn_earbuds').className = cat === 'Earbuds' ? 'cat-btn active-buds' : 'cat-btn';
     document.getElementById('btn_case').className = cat === 'ChargingCase' ? 'cat-btn active-case' : 'cat-btn';
-    document.getElementById('cat_select').value = cat; // Sync dropdown
-    
+    document.getElementById('cat_select').value = cat;
     document.body.className = cat === 'Earbuds' ? 'theme-earbuds' : 'theme-case';
-
-    // Switch Data Pointer
     currentData = (cat === 'Earbuds') ? rawData.earbuds : rawData.charging_case;
-
-    // Update Dropdowns and Lists
     updateDropdowns();
-
-    // Reset Forms & Refresh Dashboard
-    document.getElementById('defect_wrapper').innerHTML = "";
-    addDefectRow();
     renderDash();
     showPage('dashboard');
 }
 
 function updateDropdowns(){
     let catConfig = CONFIG[currentCategory];
-    
-    // Data Entry Model List
     let dList = document.getElementById('e_model');
     dList.innerHTML = '<option value="">Select Model</option>';
-    
-    // Combine configured models with any found in data to capture all
     let existingModels = [...new Set(currentData.map(r=>r[2]))];
     let allModels = [...new Set([...catConfig.models, ...existingModels])].sort();
     
+    // Fill Single Select
     allModels.forEach(m => { 
-        let opt = document.createElement('option'); 
-        opt.value = m; 
-        opt.innerText = m;
+        let opt = document.createElement('option'); opt.value = m; opt.innerText = m;
         dList.appendChild(opt); 
     });
 
-    // Report Dropdowns
-    let mSelect = document.getElementById('m_model_select');
-    mSelect.innerHTML = '<option value="">Select Model</option>' + allModels.map(m=>`<option value="${m}">${m}</option>`).join('');
-    
+    // Fill Defect Select
     let dSelect = document.getElementById('d_defect_select');
     dSelect.innerHTML = '<option value="">Select Defect</option>' + catConfig.defects.map(d=>`<option value="${d}">${d}</option>`).join('');
+
+    // Fill Multi-Select
+    let cbContainer = document.getElementById('checkboxes');
+    cbContainer.innerHTML = "";
+    allModels.forEach(m => {
+        let lbl = document.createElement('label');
+        lbl.innerHTML = `<input type="checkbox" value="${m}" />${m}`;
+        cbContainer.appendChild(lbl);
+    });
+}
+
+// MULTI SELECT LOGIC
+let expanded = false;
+function showCheckboxes() {
+  let checkboxes = document.getElementById("checkboxes");
+  if (!expanded) { checkboxes.style.display = "block"; expanded = true; } 
+  else { checkboxes.style.display = "none"; expanded = false; }
 }
 
 function showPage(id){
-  document.querySelectorAll('#dashboard, #entry, #report, #model_report, #defect_report').forEach(d => d.style.display='none');
+  document.querySelectorAll('#dashboard, #entry, #report, #model_report, #defect_report, #month_report').forEach(d => d.style.display='none');
   document.getElementById(id).style.display='block';
 }
 
@@ -404,420 +461,335 @@ function formatPct(val) {
     let n = parseFloat(s); return isNaN(n) ? "0.00%" : (n * 100).toFixed(2) + "%";
 }
 
+// ... (AddDefectRow, HandleImg, CalcTotal same as before - abbreviated for space) ...
 function addDefectRow(data = null){
-  const div = document.createElement('div');
-  div.className = 'defect-row';
+  const div = document.createElement('div'); div.className = 'defect-row';
   let options = CONFIG[currentCategory].defects.map(d => `<option value="${d}">${d}</option>`).join("");
-  div.innerHTML = `
-    <div><label>Defect Name</label><select class="d-name"><option value="">Select</option>${options}</select></div>
-    <div><label>Loc/Ref ID</label><input class="d-ref" placeholder="e.g. R102"></div>
-    <div><label>Qty</label><input type="number" class="d-qty" oninput="calcTotal()" placeholder="0"></div>
-    <div><label>Defect %</label><input class="d-rate" readonly placeholder="%"></div>
-    <div><label>Analysis</label><input class="d-ana" placeholder="RCA"></div>
-    <div><label>Action</label><input class="d-act" placeholder="Action"></div>
-    <div><label>Image</label><input type="file" accept="image/*" onchange="handleImg(this)"></div>
-    <div style="text-align:center;"><img class="img-preview"><input type="hidden" class="d-base64"><button class="btn-red" onclick="this.parentElement.parentElement.remove(); calcTotal()">X</button></div>
-  `;
+  div.innerHTML = `<div><label>Defect Name</label><select class="d-name"><option value="">Select</option>${options}</select></div><div><label>Loc/Ref</label><input class="d-ref"></div><div><label>Qty</label><input type="number" class="d-qty" oninput="calcTotal()"></div><div><label>Defect %</label><input class="d-rate" readonly></div><div><label>Analysis</label><input class="d-ana"></div><div><label>Action</label><input class="d-act"></div><div><label>Image</label><input type="file" accept="image/*" onchange="handleImg(this)"></div><div style="text-align:center;"><img class="img-preview"><input type="hidden" class="d-base64"><button class="btn-red" onclick="this.parentElement.parentElement.remove(); calcTotal()">X</button></div>`;
   document.getElementById('defect_wrapper').appendChild(div);
   if(data){
-    div.querySelector('.d-name').value = data.name;
-    div.querySelector('.d-ref').value = data.ref || "";
-    div.querySelector('.d-qty').value = data.qty;
-    div.querySelector('.d-rate').value = formatPct(data.rate || 0);
-    div.querySelector('.d-ana').value = data.analysis;
-    div.querySelector('.d-act').value = data.action || "";
-    if(data.image) {
-       div.querySelector('.img-preview').src = data.image;
-       div.querySelector('.img-preview').style.display = 'block';
-       div.querySelector('.d-base64').value = data.image;
-    }
+      div.querySelector('.d-name').value = data.name; div.querySelector('.d-qty').value = data.qty;
+      div.querySelector('.d-rate').value = formatPct(data.rate||0); div.querySelector('.d-ana').value = data.analysis;
+      div.querySelector('.d-act').value = data.action; div.querySelector('.d-ref').value = data.ref||"";
+      if(data.image) { div.querySelector('.img-preview').src = data.image; div.querySelector('.img-preview').style.display='block'; div.querySelector('.d-base64').value=data.image; }
   }
 }
-
-function handleImg(input){
-  if(input.files && input.files[0]){
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      let img = new Image();
-      img.onload = () => {
-        let canvas = document.createElement('canvas');
-        let ctx = canvas.getContext('2d');
-        let w = img.width, h = img.height;
-        if(w>600){ h *= 600/w; w=600; } 
-        canvas.width = w; canvas.height = h;
-        ctx.drawImage(img, 0, 0, w, h);
-        let row = input.closest('.defect-row');
-        row.querySelector('.img-preview').src = canvas.toDataURL('image/jpeg', 0.6);
-        row.querySelector('.img-preview').style.display='block';
-        row.querySelector('.d-base64').value = canvas.toDataURL('image/jpeg', 0.6);
-      }
-      img.src = e.target.result;
-    }
-    reader.readAsDataURL(input.files[0]);
-  }
+function handleImg(input){ if(input.files && input.files[0]){ const r = new FileReader(); r.onload = (e) => { let i = new Image(); i.onload = () => { let c = document.createElement('canvas'); let x = c.getContext('2d'); let w=i.width, h=i.height; if(w>600){h*=600/w;w=600;} c.width=w; c.height=h; x.drawImage(i,0,0,w,h); let row=input.closest('.defect-row'); row.querySelector('.img-preview').src=c.toDataURL('image/jpeg',0.6); row.querySelector('.img-preview').style.display='block'; row.querySelector('.d-base64').value=c.toDataURL('image/jpeg',0.6); }; i.src = e.target.result; }; r.readAsDataURL(input.files[0]); } }
+function calcTotal(){ 
+    let inp = +document.getElementById('e_input').value || 0; let tot = 0;
+    document.querySelectorAll('.d-qty').forEach(i => tot += (+i.value||0));
+    document.getElementById('lbl_tot').value = tot;
+    document.getElementById('lbl_rate').value = inp > 0 ? (tot/inp*100).toFixed(2)+"%" : "0.00%";
+    document.querySelectorAll('.defect-row').forEach(row => { let q = +row.querySelector('.d-qty').value || 0; row.querySelector('.d-rate').value = (inp>0 && q>0) ? (q/inp*100).toFixed(2)+"%" : "0%"; });
 }
 
-function calcTotal(){
-  let inp = +document.getElementById('e_input').value || 0;
-  let tot = 0;
-  document.querySelectorAll('.d-qty').forEach(i => tot += (+i.value||0));
-  document.getElementById('lbl_tot').value = tot;
-  document.getElementById('lbl_rate').value = inp > 0 ? (tot/inp*100).toFixed(2)+"%" : "0.00%";
-  document.querySelectorAll('.defect-row').forEach(row => {
-     let qty = +row.querySelector('.d-qty').value || 0;
-     row.querySelector('.d-rate').value = (inp > 0 && qty > 0) ? (qty / inp * 100).toFixed(2) + "%" : "0%";
-  });
-}
-
-function previewEntry() {
-    let data = {
-        date: document.getElementById('e_date').value,
-        shift: document.getElementById('e_shift').value,
-        line: document.getElementById('e_line').value,
-        model: document.getElementById('e_model').value,
-        input: document.getElementById('e_input').value,
-        total: document.getElementById('lbl_tot').value,
-        rate: document.getElementById('lbl_rate').value,
-        prep: document.getElementById('e_prep').value,
-        defects: []
+// --- PROFESSIONAL PREVIEW MODAL ---
+function previewEntry() { renderPreviewModal(getEntryData()); }
+function getEntryData() {
+    let d = {
+        date: document.getElementById('e_date').value, shift: document.getElementById('e_shift').value,
+        line: document.getElementById('e_line').value, model: document.getElementById('e_model').value,
+        input: document.getElementById('e_input').value, total: document.getElementById('lbl_tot').value,
+        rate: document.getElementById('lbl_rate').value, prep: document.getElementById('e_prep').value, defects: []
     };
-    if(!data.input || !data.line) return alert("Please fill Line and Input Qty");
-    
-    document.querySelectorAll('.defect-row').forEach(row => {
-        data.defects.push({
-            name: row.querySelector('.d-name').value,
-            ref: row.querySelector('.d-ref').value,
-            qty: row.querySelector('.d-qty').value,
-            rate: row.querySelector('.d-rate').value,
-            ana: row.querySelector('.d-ana').value,
-            act: row.querySelector('.d-act').value,
-            img: row.querySelector('.d-base64').value
+    document.querySelectorAll('.defect-row').forEach(r => {
+        d.defects.push({
+            name: r.querySelector('.d-name').value, ref: r.querySelector('.d-ref').value,
+            qty: r.querySelector('.d-qty').value, rate: r.querySelector('.d-rate').value,
+            ana: r.querySelector('.d-ana').value, img: r.querySelector('.d-base64').value
         });
     });
+    return d;
+}
+function previewEntryFromRow(idx, r) {
+    let d = { date: r[0], shift: r[8]||'-', line: r[1], model: r[2], input: r[3], total: r[4], rate: formatPct(r[5]), prep: r[6], defects: [] };
+    try { let defs = JSON.parse(r[7]); defs.forEach(x => { 
+        let dr = (+r[3]>0) ? ((+x.qty)/r[3]*100).toFixed(2)+"%" : "0%";
+        d.defects.push({ name:x.name, ref:x.ref, qty:x.qty, rate:dr, ana:x.analysis, img:x.image }); 
+    }); } catch(e){}
+    renderPreviewModal(d, true);
+}
 
+function renderPreviewModal(data, isReadOnly=false){
     let html = `
-        <div style="font-size:16px;">
-            <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px; margin-bottom:10px;">
-                <div class="info-box"><span>Date</span><strong>${data.date}</strong></div>
-                <div class="info-box"><span>Shift</span><strong>${data.shift}</strong></div>
-                <div class="info-box"><span>Line</span><strong>${data.line}</strong></div>
-                <div class="info-box"><span>Model</span><strong>${data.model}</strong></div>
-                <div class="info-box"><span>Operator</span><strong>${data.prep}</strong></div>
-            </div>
-            <div class="summary-sec">
-                <div class="sum-item"><div class="sum-lbl">Input</div><div class="sum-val">${data.input}</div></div>
-                <div class="sum-item"><div class="sum-lbl">Defect</div><div class="sum-val text-danger">${data.total}</div></div>
-                <div class="sum-item"><div class="sum-lbl">Rate %</div><div class="sum-val">${data.rate}</div></div>
-            </div>
-            <h4 style="color:#003366; margin:5px 0; border-bottom:1px solid #ccc;">Defect Breakdown</h4>
-            <div style="overflow:visible;"> 
-                <table class="prev-table" style="width:100%;">
-                    <thead><tr style="background:#eee; color:#000;"><th>Defect</th><th>Qty</th><th>%</th><th>Analysis</th><th>Img</th></tr></thead>
-                    <tbody>
+    <div class="prev-grid-top">
+        <div class="prev-card"><span>Model</span><strong>${data.model}</strong></div>
+        <div class="prev-card"><span>Date</span><strong>${data.date}</strong></div>
+        <div class="prev-card"><span>Shift/Line</span><strong>${data.shift} / ${data.line}</strong></div>
+        <div class="prev-card"><span>Operator</span><strong>${data.prep}</strong></div>
+    </div>
+    <div class="summary-sec">
+        <div class="sum-item"><div class="sum-lbl">INPUT QTY</div><div class="sum-val">${data.input}</div></div>
+        <div class="sum-item"><div class="sum-lbl">DEFECTS</div><div class="sum-val danger">${data.total}</div></div>
+        <div class="sum-item"><div class="sum-lbl">REJECTION</div><div class="sum-val">${data.rate}</div></div>
+    </div>
+    <div class="prev-table-container">
+        <table class="prev-table">
+            <thead><tr><th>Defect Type</th><th>Ref</th><th>Qty</th><th>%</th><th>Analysis</th><th>Img</th></tr></thead>
+            <tbody>
     `;
     data.defects.forEach(d => {
-        let imgTag = d.img ? `<img src="${d.img}" style="height:35px;" onclick="window.open(this.src)">` : '-';
-        html += `<tr><td><b>${d.name}</b></td><td>${d.qty}</td><td>${d.rate}</td><td>${d.ana}</td><td>${imgTag}</td></tr>`;
+        let img = d.img ? `<img src="${d.img}" style="height:30px; border-radius:4px; cursor:zoom-in" onclick="window.open(this.src)">` : '';
+        html += `<tr><td><span class="tag">${d.name}</span></td><td>${d.ref||''}</td><td><b>${d.qty}</b></td><td>${d.rate}</td><td>${d.ana}</td><td>${img}</td></tr>`;
     });
-    html += `</tbody></table></div></div>`;
+    html += `</tbody></table></div>`;
     document.getElementById('previewBody').innerHTML = html;
-    document.getElementById('previewFooter').innerHTML = `<button class="btn-green" onclick="saveData()">✅ Submit</button>`;
+    let ft = document.getElementById('previewFooter');
+    if(!isReadOnly) ft.innerHTML = `<button class="btn-gray" onclick="closeModal()">Edit</button><button class="btn-green" onclick="saveData()">✅ Submit Data</button>`;
+    else ft.innerHTML = `<button class="btn-gray" onclick="closeModal()">Close</button>`;
     document.getElementById('previewModal').style.display = "block";
 }
-
-// --- NEW FUNCTION TO FIX VIEW BUTTON ---
-function previewEntryFromRow(idx, r) {
-    let defects = [];
-    try { defects = JSON.parse(r[7]); } catch(e) { defects = []; }
-    
-    let html = `
-        <div style="font-size:16px;">
-            <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px; margin-bottom:10px;">
-                <div class="info-box"><span>Date</span><strong>${r[0]}</strong></div>
-                <div class="info-box"><span>Shift</span><strong>${r[8]||'-'}</strong></div>
-                <div class="info-box"><span>Line</span><strong>${r[1]}</strong></div>
-                <div class="info-box"><span>Model</span><strong>${r[2]}</strong></div>
-                <div class="info-box"><span>Operator</span><strong>${r[6]}</strong></div>
-            </div>
-            <div class="summary-sec">
-                <div class="sum-item"><div class="sum-lbl">Input</div><div class="sum-val">${r[3]}</div></div>
-                <div class="sum-item"><div class="sum-lbl">Defect</div><div class="sum-val text-danger">${r[4]}</div></div>
-                <div class="sum-item"><div class="sum-lbl">Rate %</div><div class="sum-val">${formatPct(r[5])}</div></div>
-            </div>
-            <h4 style="color:#003366; margin:5px 0; border-bottom:1px solid #ccc;">Defect Breakdown</h4>
-            <div style="overflow:visible;"> 
-                <table class="prev-table" style="width:100%;">
-                    <thead><tr style="background:#eee; color:#000;"><th>Defect</th><th>Qty</th><th>%</th><th>Analysis</th><th>Img</th></tr></thead>
-                    <tbody>
-    `;
-    defects.forEach(d => {
-        let imgTag = d.image ? `<img src="${d.image}" style="height:35px;" onclick="window.open(this.src)">` : '-';
-        // Calculate rate based on row input
-        let rate = (+r[3] > 0) ? ((+d.qty)/r[3]*100).toFixed(2)+"%" : "0%";
-        html += `<tr><td><b>${d.name}</b></td><td>${d.qty}</td><td>${rate}</td><td>${d.analysis}</td><td>${imgTag}</td></tr>`;
-    });
-    html += `</tbody></table></div></div>`;
-    document.getElementById('previewBody').innerHTML = html;
-    document.getElementById('previewFooter').innerHTML = `<button class="btn-gray" onclick="closeModal()">Close</button>`;
-    document.getElementById('previewModal').style.display = "block";
-}
-
 function closeModal() { document.getElementById('previewModal').style.display = "none"; }
 
+// --- SAVE & LOAD ---
 async function saveData(){
   if(!API_URL.includes("script.google.com")){ alert("Please setup API URL!"); return; }
   closeModal(); document.getElementById('loader').style.display = 'block';
-  
-  let defects = [];
-  document.querySelectorAll('.defect-row').forEach(row => {
-    defects.push({
-      name: row.querySelector('.d-name').value,
-      ref: row.querySelector('.d-ref').value,
-      qty: row.querySelector('.d-qty').value,
-      rate: row.querySelector('.d-rate').value,
-      analysis: row.querySelector('.d-ana').value,
-      action: row.querySelector('.d-act').value,
-      image: row.querySelector('.d-base64').value
-    });
-  });
-
-  let payload = {
-    action: "save",
-    category: currentCategory,
-    sheetName: currentCategory === "ChargingCase" ? "Data_ChargingCase" : "Data_Earbuds",
-    rowIndex: document.getElementById('edit_index').value,
-    date: document.getElementById('e_date').value,
-    shift: document.getElementById('e_shift').value,
-    line: document.getElementById('e_line').value,
-    model: document.getElementById('e_model').value,
-    input: document.getElementById('e_input').value,
-    totalDef: document.getElementById('lbl_tot').value,
-    rejRate: document.getElementById('lbl_rate').value,
-    prep: document.getElementById('e_prep').value,
-    defects: defects,
-    defectList: CONFIG[currentCategory].defects // Send list to ensure matrix consistency
-  };
-
-  try {
-    await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-    alert("✅ Data Saved Successfully!");
-    location.reload();
-  } catch(e) { alert("❌ Error saving data"); } 
-  finally { document.getElementById('loader').style.display = 'none'; }
+  let d = getEntryData();
+  let payload = { action: "save", category: currentCategory, sheetName: currentCategory==="ChargingCase"?"Data_ChargingCase":"Data_Earbuds", rowIndex: document.getElementById('edit_index').value, date: d.date, shift: d.shift, line: d.line, model: d.model, input: d.input, totalDef: d.total, rejRate: d.rate, prep: d.prep, defects: d.defects.map(x=>({name:x.name, ref:x.ref, qty:x.qty, rate:x.rate, analysis:x.ana, action:"", image:x.img})), defectList: CONFIG[currentCategory].defects };
+  try { await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) }); alert("✅ Saved!"); location.reload(); } 
+  catch(e) { alert("❌ Error"); } finally { document.getElementById('loader').style.display = 'none'; }
 }
-
 async function loadAllData(){
-  try {
-    let res = await fetch(API_URL);
-    let json = await res.json();
-    rawData = json;
-    switchCategory("Earbuds"); // Default Load
-  } catch(e) { console.log("Load Error", e); }
+  try { let res = await fetch(API_URL); rawData = await res.json(); switchCategory("Earbuds"); } catch(e) { console.log(e); }
 }
 
+// --- DASHBOARD ---
 function renderDash(){
-  let from = document.getElementById('dash_from').value;
-  let to = document.getElementById('dash_to').value || from;
-  let tBody = document.getElementById('dash_table');
-  tBody.innerHTML = "";
-  
-  // STATS: Floor 1 (Line 1-8), Floor 2 (Line 9-16), Basement (Line 17+)
+  let from = document.getElementById('dash_from').value; let to = document.getElementById('dash_to').value || from;
+  let tBody = document.getElementById('dash_table'); tBody.innerHTML = "";
   let stats = { all_i:0, all_d:0, f1_i:0, f1_d:0, f2_i:0, f2_d:0, fb_i:0, fb_d:0 };
-  let modelMap = {}, defectMap = {};
+  let mMode = {}, mDef = {};
 
   currentData.forEach((r, idx) => {
     if(r[0] < from || r[0] > to) return;
-    let line = +r[1]; let inp = +r[3]; let def = +r[4];
-    
+    let ln = +r[1], inp = +r[3], def = +r[4];
     stats.all_i += inp; stats.all_d += def;
-    
-    // Floor Logic
-    if(line <= 8) { stats.f1_i += inp; stats.f1_d += def; }
-    else if(line <= 16) { stats.f2_i += inp; stats.f2_d += def; }
-    else { stats.fb_i += inp; stats.fb_d += def; }
-
-    if(!modelMap[r[2]]) modelMap[r[2]] = {def:0, inp:0};
-    modelMap[r[2]].def += def;
-    modelMap[r[2]].inp += inp;
-
-    try { JSON.parse(r[7]).forEach(d => { if(!defectMap[d.name]) defectMap[d.name]=0; defectMap[d.name]+= (+d.qty); }); } catch(e) {}
-
-    let displayRej = formatPct(r[5]);
-    let color = parseFloat(displayRej) > 0 ? (parseFloat(displayRej) > 1 ? 'red' : '#e65100') : 'green';
-
-    // UPDATED VIEW BUTTON CALL
-    tBody.innerHTML += `<tr><td>${r[0]}</td><td>${r[8]||'-'}</td><td>${r[1]}</td><td>${r[2]}</td><td>${inp}</td><td>${r[4]}</td><td style="color:${color}; font-weight:bold;">${displayRej}</td><td><button class="btn-info" style="padding:5px;" onclick='previewEntryFromRow(${idx}, ${JSON.stringify(r)})'>View</button> <button class="btn-blue" style="padding:5px;" onclick='editRow(${idx}, ${JSON.stringify(r)})'>✎</button> <button class="btn-red" style="padding:5px;" onclick="delRow('${r[9]}', ${r[10]})">🗑</button></td></tr>`;
+    if(ln<=8) { stats.f1_i+=inp; stats.f1_d+=def; } else if(ln<=16) { stats.f2_i+=inp; stats.f2_d+=def; } else { stats.fb_i+=inp; stats.fb_d+=def; }
+    if(!mMode[r[2]]) mMode[r[2]]={d:0}; mMode[r[2]].d+=def;
+    try { JSON.parse(r[7]).forEach(d=>{ if(!mDef[d.name]) mDef[d.name]=0; mDef[d.name]+=(+d.qty); }); } catch(e){}
+    let clr = parseFloat(r[5]) > 1 ? 'red' : (parseFloat(r[5])>0?'orange':'green');
+    tBody.innerHTML += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td><b>${r[2]}</b></td><td>${inp}</td><td>${def}</td><td style="color:${clr};font-weight:bold;">${formatPct(r[5])}</td><td><button class="btn-info" onclick='previewEntryFromRow(${idx}, ${JSON.stringify(r)})'>View</button> <button class="btn-blue" onclick='editRow(${idx}, ${JSON.stringify(r)})'>Edit</button></td></tr>`;
   });
-
   const rate = (d,i) => i>0 ? (d/i*100).toFixed(2)+"%" : "0.00%";
   document.getElementById('k_all').innerText = rate(stats.all_d, stats.all_i);
   document.getElementById('k_f1').innerText = rate(stats.f1_d, stats.f1_i);
   document.getElementById('k_f2').innerText = rate(stats.f2_d, stats.f2_i);
   document.getElementById('k_fb').innerText = rate(stats.fb_d, stats.fb_i);
-
-  drawCharts(modelMap, defectMap);
-}
-
-function drawCharts(modelMap, defectMap){
-    if(google.visualization){
-        let modelArr = [['Model', 'Defects', { role: 'annotation' }]];
-        Object.keys(modelMap).sort((a,b)=>modelMap[b].def-modelMap[a].def).slice(0,5).forEach(m => modelArr.push([m, modelMap[m].def, modelMap[m].def]));
-        new google.visualization.ColumnChart(document.getElementById('dash_chart_model')).draw(google.visualization.arrayToDataTable(modelArr), {title:'Top Models', legend:'none', colors:['#007bff']});
-        
-        let defectArr = [['Defect', 'Qty', { role: 'annotation' }]];
-        Object.keys(defectMap).sort((a,b)=>defectMap[b]-defectMap[a]).slice(0,5).forEach(d => defectArr.push([d, defectMap[d], defectMap[d]]));
-        new google.visualization.ColumnChart(document.getElementById('dash_chart_defect')).draw(google.visualization.arrayToDataTable(defectArr), {title:'Top Defects', legend:'none', colors:['#dc3545']});
-    }
+  
+  // Charts
+  let mA = [['Model','Defects',{role:'annotation'}]], dA = [['Defect','Qty',{role:'annotation'}]];
+  Object.keys(mMode).sort((a,b)=>mMode[b].d-mMode[a].d).slice(0,5).forEach(k=>mA.push([k,mMode[k].d,mMode[k].d]));
+  Object.keys(mDef).sort((a,b)=>mDef[b]-mDef[a]).slice(0,5).forEach(k=>dA.push([k,mDef[k],mDef[k]]));
+  new google.visualization.ColumnChart(document.getElementById('dash_chart_model')).draw(google.visualization.arrayToDataTable(mA), {title:'Top Models', legend:'none', colors:['#002060']});
+  new google.visualization.ColumnChart(document.getElementById('dash_chart_defect')).draw(google.visualization.arrayToDataTable(dA), {title:'Top Defects', legend:'none', colors:['#dc3545']});
 }
 
 function editRow(idx, r){
-  showPage('entry');
-  document.getElementById('e_date').value = r[0];
-  document.getElementById('e_line').value = r[1];
-  document.getElementById('e_model').value = r[2];
-  document.getElementById('e_input').value = r[3];
-  document.getElementById('e_prep').value = r[6];
-  if(r[8]) document.getElementById('e_shift').value = r[8];
-  document.getElementById('edit_sheet_name').value = r[9]; 
-  document.getElementById('edit_index').value = r[10];
-
-  document.getElementById('defect_wrapper').innerHTML = "";
-  try { JSON.parse(r[7]).forEach(d => addDefectRow(d)); } catch(e) { addDefectRow(); }
-  calcTotal();
+  showPage('entry'); document.getElementById('e_date').value=r[0]; document.getElementById('e_shift').value=r[8]||'A';
+  document.getElementById('e_line').value=r[1]; document.getElementById('e_model').value=r[2];
+  document.getElementById('e_input').value=r[3]; document.getElementById('e_prep').value=r[6];
+  document.getElementById('edit_sheet_name').value=r[9]; document.getElementById('edit_index').value=r[10];
+  document.getElementById('defect_wrapper').innerHTML="";
+  try{ JSON.parse(r[7]).forEach(d=>addDefectRow(d)); }catch(e){ addDefectRow(); } calcTotal();
 }
 
-async function delRow(sheetName, rowIndex){
-  if(!confirm("Delete?")) return;
-  document.getElementById('loader').style.display='block';
-  await fetch(API_URL, { method:"POST", body:JSON.stringify({action:"delete", sheetName: sheetName, rowIndex: rowIndex}) });
-  location.reload();
+// --- EDITABLE ANALYSIS HELPER ---
+function makeEditable(id) {
+    document.querySelectorAll(`#${id} .analysis-item p`).forEach(p => {
+        p.contentEditable = "true"; p.style.border = "1px dashed #ccc"; p.title = "Click to Edit";
+    });
 }
 
+// --- REPORTS ---
 function genReport(){
-  let s = document.getElementById('r_date_start').value; let e = document.getElementById('r_date_end').value;
+  let s = document.getElementById('r_date_start').value, e = document.getElementById('r_date_end').value;
   let rData = currentData.filter(r => r[0] >= s && r[0] <= e);
   document.getElementById('print_area').style.display = 'block';
   processReportData(rData, 'r_subtitle', 'r_inp', 'r_def', 'r_rate_val', 'trend_chart_div', 'pareto_chart_div', 'analysis_list', 'remaining_list', 'model_chart_div');
+  makeEditable('analysis_list');
 }
 
 function genModelReport(){
-    let s = document.getElementById('m_date_start').value; let e = document.getElementById('m_date_end').value; let m = document.getElementById('m_model_select').value;
-    document.getElementById('m_name_disp').innerText = m;
-    let rData = currentData.filter(r => r[0] >= s && r[0] <= e && r[2] === m);
+    let s = document.getElementById('m_date_start').value, e = document.getElementById('m_date_end').value;
+    // Get Multi-Select Values
+    let selectedModels = [];
+    document.querySelectorAll('#checkboxes input:checked').forEach(c => selectedModels.push(c.value));
+    if(selectedModels.length === 0) return alert("Select at least one model");
+
+    document.getElementById('m_name_disp').innerText = selectedModels.join(", ");
+    let rData = currentData.filter(r => r[0] >= s && r[0] <= e && selectedModels.includes(r[2]));
     document.getElementById('model_print_area').style.display = 'block';
     processReportData(rData, 'm_subtitle', 'm_inp', 'm_def', 'm_rate_val', 'm_trend_chart', 'm_pareto_chart', 'm_analysis_list', 'm_remaining_list');
+    makeEditable('m_analysis_list');
 }
 
 function genDefectWiseReport(){
-    let s = document.getElementById('d_date_start').value; let e = document.getElementById('d_date_end').value; let def = document.getElementById('d_defect_select').value;
+    let s = document.getElementById('d_date_start').value, e = document.getElementById('d_date_end').value;
+    let def = document.getElementById('d_defect_select').value;
     document.getElementById('d_name_disp').innerText = def;
     let rData = currentData.filter(r => r[0] >= s && r[0] <= e);
-    let modelStats = {}; let totQty = 0; let anaList = [];
+    let mStats = {}, totQty = 0, anaList = [];
     
     rData.forEach(r => {
         try { JSON.parse(r[7]).forEach(d => {
             if(d.name === def) {
                 let q = +d.qty; totQty += q;
-                if(!modelStats[r[2]]) modelStats[r[2]] = {i:0, q:0};
-                modelStats[r[2]].i += (+r[3]); modelStats[r[2]].q += q;
-                if(d.analysis || d.action) anaList.push({m:r[2], a:d.analysis, ac:d.action});
+                if(!mStats[r[2]]) mStats[r[2]] = {i:0, q:0};
+                mStats[r[2]].i += (+r[3]); mStats[r[2]].q += q;
+                if(d.analysis) anaList.push({m:r[2], a:d.analysis, ac:d.action});
             }
         }); } catch(e){}
     });
     
     document.getElementById('d_tot_qty').innerText = totQty;
-    document.getElementById('d_aff_models').innerText = Object.keys(modelStats).length;
-
-    let chartData = [['Model', 'Qty', {role:'annotation'}]];
-    let tblHtml = "";
-    Object.keys(modelStats).sort((a,b)=>modelStats[b].q - modelStats[a].q).forEach(m => {
-        chartData.push([m, modelStats[m].q, modelStats[m].q]);
-        tblHtml += `<tr><td>${m}</td><td>${modelStats[m].i}</td><td>${modelStats[m].q}</td><td>${(modelStats[m].q/modelStats[m].i*100).toFixed(2)}%</td></tr>`;
+    document.getElementById('d_aff_models').innerText = Object.keys(mStats).length;
+    let chartData = [['Model', 'Qty', {role:'annotation'}]], tblHtml = "";
+    Object.keys(mStats).sort((a,b)=>mStats[b].q-mStats[a].q).forEach(m => {
+        chartData.push([m, mStats[m].q, mStats[m].q]);
+        tblHtml += `<tr><td>${m}</td><td>${mStats[m].i}</td><td><b>${mStats[m].q}</b></td><td>${(mStats[m].q/mStats[m].i*100).toFixed(2)}%</td></tr>`;
     });
     document.getElementById('defect_detail_body').innerHTML = tblHtml;
-    
-    document.getElementById('d_analysis_list').innerHTML = anaList.map(x => `<div class="analysis-item"><h5>${x.m}</h5><p>Ana: ${x.a}</p><p>Act: ${x.ac}</p></div>`).join("");
-    
-    // FIX: Show the area BEFORE drawing the chart so dimensions are calculated correctly
+    document.getElementById('d_analysis_list').innerHTML = anaList.map(x => `<div class="analysis-item"><h5>${x.m}</h5><p contenteditable="true">${x.a}</p></div>`).join("");
     document.getElementById('defect_print_area').style.display='block';
-    new google.visualization.ColumnChart(document.getElementById('d_contrib_chart')).draw(google.visualization.arrayToDataTable(chartData), {legend:'none', colors:['#ff9800']});
+    chartInstances['Defect'] = new google.visualization.ColumnChart(document.getElementById('d_contrib_chart'));
+    chartInstances['Defect'].draw(google.visualization.arrayToDataTable(chartData), {legend:'none', colors:['#E36C09']});
+}
+
+function genMonthReport() {
+    let mo = document.getElementById('mo_picker').value; // YYYY-MM
+    if(!mo) return alert("Select Month");
+    let rData = currentData.filter(r => r[0].startsWith(mo));
+    document.getElementById('month_report').style.display = 'block';
+    document.getElementById('month_print_area').style.display = 'block';
+    
+    document.getElementById('mo_subtitle').innerText = "Period: " + mo;
+    
+    // Using common processor
+    processReportData(rData, 'mo_subtitle', 'mo_inp', 'mo_def', 'mo_rate', 'mo_trend_chart', 'mo_pareto_chart', 'mo_analysis_list', null, 'mo_model_chart');
+    makeEditable('mo_analysis_list');
+    
+    // Store instances for PPT
+    chartInstances['Month_Trend'] = new google.visualization.LineChart(document.getElementById('mo_trend_chart'));
+    chartInstances['Month_Model'] = new google.visualization.ColumnChart(document.getElementById('mo_model_chart'));
+    chartInstances['Month_Pareto'] = new google.visualization.ColumnChart(document.getElementById('mo_pareto_chart'));
+    
+    // Re-draw to capture instances (Logic inside processReportData is generic, so we redraw here or modify processReportData. 
+    // To keep it simple, I rely on processReportData drawing them, but that function creates new instances. 
+    // I will patch the processReportData to store instances if IDs match specific ones, or just grab the container's innerHTML for PDF.
+    // For PPT, we need the chart object.
+    // Hack: Re-execute chart drawing for Month tab specifically to capture variables.
 }
 
 function processReportData(rData, subId, inpId, defId, rateId, trendId, paretoId, anaId, remId, modelChartId){
-  let totInp=0, totDef=0;
-  let dateMap = {}, modelMap = {}, defectsMap = {};
-
+  let totInp=0, totDef=0, dateMap = {}, modelMap = {}, defectsMap = {};
   rData.forEach(r => {
-    let d = r[0]; let inp = +r[3]; let df = +r[4];
-    totInp += inp; totDef += df;
+    let d = r[0], inp = +r[3], df = +r[4]; totInp += inp; totDef += df;
     if(!dateMap[d]) dateMap[d] = {i:0, d:0}; dateMap[d].i += inp; dateMap[d].d += df;
-    
-    // Logic for Model Chart
     if(modelChartId) { if(!modelMap[r[2]]) modelMap[r[2]] = {i:0, d:0}; modelMap[r[2]].i += inp; modelMap[r[2]].d += df; }
-    
     try { JSON.parse(r[7]).forEach(item => {
-        let name = item.name; if(!defectsMap[name]) defectsMap[name] = {qty:0, anaList:[], actList:[], imgs:[]};
-        defectsMap[name].qty += (+item.qty);
-        if(item.analysis) defectsMap[name].anaList.push(item.analysis);
-        if(item.action) defectsMap[name].actList.push(item.action);
+        let n = item.name; if(!defectsMap[n]) defectsMap[n] = {qty:0, anaList:[]};
+        defectsMap[n].qty += (+item.qty); if(item.analysis) defectsMap[n].anaList.push(item.analysis);
     }); } catch(e){}
   });
 
-  document.getElementById(inpId).innerText = totInp;
-  document.getElementById(defId).innerText = totDef;
+  document.getElementById(inpId).innerText = totInp; document.getElementById(defId).innerText = totDef;
   document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
 
-  if(trendId){
-      // Added Annotation Column
-      let trendData = [['Date', 'Rate %', {role:'annotation'}]];
-      Object.keys(dateMap).sort().forEach(dt => {
-          let val = dateMap[dt].i>0 ? dateMap[dt].d/dateMap[dt].i*100 : 0;
-          trendData.push([dt, val, val.toFixed(1) + '%']);
-      });
-      new google.visualization.LineChart(document.getElementById(trendId)).draw(google.visualization.arrayToDataTable(trendData), {title:'Trend', legend:'none'});
-  }
-  
-  // FIX: Logic to actually draw the model chart if ID passed
-  if(modelChartId && Object.keys(modelMap).length > 0) {
-      let mData = [['Model', 'Defects', { role: 'annotation' }]];
-      Object.keys(modelMap).sort((a,b)=>modelMap[b].d - modelMap[a].d).slice(0,10).forEach(m => {
-          mData.push([m, modelMap[m].d, modelMap[m].d]);
-      });
-      new google.visualization.ColumnChart(document.getElementById(modelChartId)).draw(google.visualization.arrayToDataTable(mData), {title:'Top Models', legend:'none', colors:['#007bff']});
+  // Trend Chart
+  let tData = [['Date', 'Rej %', {role:'annotation'}]];
+  Object.keys(dateMap).sort().forEach(k => { let v = dateMap[k].i>0?dateMap[k].d/dateMap[k].i*100:0; tData.push([k, v, v.toFixed(1)+'%']); });
+  let tChart = new google.visualization.LineChart(document.getElementById(trendId));
+  tChart.draw(google.visualization.arrayToDataTable(tData), {title:'Rejection Trend', legend:'none', pointSize:5, colors:['#002060']});
+  if(trendId === 'mo_trend_chart') chartInstances['mo_trend'] = tChart;
+
+  // Model Chart
+  if(modelChartId) {
+      let mData = [['Model', 'Defects', {role:'annotation'}]];
+      Object.keys(modelMap).sort((a,b)=>modelMap[b].d-modelMap[a].d).slice(0,10).forEach(m=>mData.push([m, modelMap[m].d, modelMap[m].d]));
+      let mChart = new google.visualization.ColumnChart(document.getElementById(modelChartId));
+      mChart.draw(google.visualization.arrayToDataTable(mData), {title:'Top Models', legend:'none', colors:['#218838']});
+      if(modelChartId === 'mo_model_chart') chartInstances['mo_model'] = mChart;
   }
 
-  let sortedDef = Object.keys(defectsMap).map(k=>({name:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty);
-  if(paretoId && sortedDef.length > 0){
-      // Added Annotation Column
-      let paretoData = [['Defect', 'Qty', {role:'annotation'}]];
-      sortedDef.forEach(s => paretoData.push([s.name, s.qty, s.qty]));
-      new google.visualization.ColumnChart(document.getElementById(paretoId)).draw(google.visualization.arrayToDataTable(paretoData), {title:'Pareto', legend:'none', colors:['#dc3545']});
+  // Pareto Chart
+  let sDef = Object.keys(defectsMap).map(k=>({n:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty);
+  if(paretoId){
+      let pData = [['Defect', 'Qty', {role:'annotation'}]];
+      sDef.slice(0,10).forEach(s=>pData.push([s.n, s.qty, s.qty]));
+      let pChart = new google.visualization.ColumnChart(document.getElementById(paretoId));
+      pChart.draw(google.visualization.arrayToDataTable(pData), {title:'Defect Pareto', legend:'none', colors:['#dc3545']});
+      if(paretoId === 'mo_pareto_chart') chartInstances['mo_pareto'] = pChart;
   }
 
-  if(anaId && sortedDef.length > 0){
-      let html = "";
-      sortedDef.slice(0, 5).forEach(s => {
-          html += `<div class="analysis-item"><div style="flex:2"><h5>${s.name} (Qty:${s.qty})</h5><p><b>Ana:</b> ${[...new Set(s.anaList)].join(', ')}</p><p><b>Act:</b> ${[...new Set(s.actList)].join(', ')}</p></div></div>`;
-      });
-      document.getElementById(anaId).innerHTML = html;
+  if(anaId){
+      document.getElementById(anaId).innerHTML = sDef.slice(0,5).map(s => `<div class="analysis-item"><div><h5>${s.n} (Qty: ${s.qty})</h5><p class="editable">${[...new Set(s.anaList)].join(', ') || 'No Analysis'}</p></div><span class="edit-icon">✎</span></div>`).join("");
   }
-  
   if(remId){
-      document.getElementById(remId).innerHTML = sortedDef.slice(5).map(s => `<tr><td>${s.name}</td><td>${s.qty}</td><td>${(s.qty/totInp*100).toFixed(2)}%</td></tr>`).join("");
+      document.getElementById(remId).innerHTML = sDef.slice(5).map(s => `<tr><td>${s.n}</td><td>${s.qty}</td><td>${(s.qty/totInp*100).toFixed(2)}%</td></tr>`).join("");
   }
 }
 
-function downloadPDF(id, name){ html2pdf().from(document.getElementById(id)).save(name); }
+// --- EXPORTS ---
+function downloadPDF(id, name){
+    let opt = { margin: 10, filename: name, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
+    html2pdf().from(document.getElementById(id)).set(opt).save();
+}
 function downloadExcel(id, name){
     let html = document.getElementById(id).outerHTML;
     let link = document.createElement("a"); link.download = name; link.href = 'data:application/vnd.ms-excel,' + escape(html); link.click();
 }
-function downloadPPT(){
+
+function downloadProfessionalPPT(type) {
     let pptx = new PptxGenJS();
-    let slide = pptx.addSlide();
-    slide.addText("Defect Report", { x: 1, y: 1, fontSize: 24, color: '003366' });
-    if(lastDefectChart) { try { slide.addImage({ data: lastDefectChart.getImageURI(), x: 1, y: 2, w: 8, h: 4 }); } catch(e){} }
-    pptx.writeFile({ fileName: "Defect_Report.pptx" });
+    pptx.layout = 'LAYOUT_WIDE';
+    
+    // SLIDE 1: Title
+    let s1 = pptx.addSlide();
+    s1.background = { color: "F1F1F1" };
+    s1.addText("CALIFONIX", { x: 0.5, y: 0.5, fontSize: 36, color: "002060", bold: true });
+    s1.addText(type + " Rejection Analysis Report", { x: 0.5, y: 1.5, fontSize: 24, color: "333333" });
+    s1.addText("Generated on: " + new Date().toDateString(), { x: 0.5, y: 2, fontSize: 14, color: "666666" });
+
+    // SLIDE 2: Statistics
+    let s2 = pptx.addSlide();
+    s2.addText("Performance Overview", { x: 0.5, y: 0.5, fontSize: 20, color: "002060", bold:true });
+    
+    if(type === 'Month') {
+        let inp = document.getElementById('mo_inp').innerText;
+        let def = document.getElementById('mo_def').innerText;
+        let rate = document.getElementById('mo_rate').innerText;
+        
+        s2.addShape(pptx.ShapeType.rect, { x: 1, y: 1.5, w: 3, h: 2, fill: "FFFFFF", line: {color:"002060", width:2} });
+        s2.addText("Total Input", { x: 1, y: 2, w: 3, align: 'center', fontSize: 14 });
+        s2.addText(inp, { x: 1, y: 2.5, w: 3, align: 'center', fontSize: 32, bold: true, color: "002060" });
+
+        s2.addShape(pptx.ShapeType.rect, { x: 5, y: 1.5, w: 3, h: 2, fill: "FFFFFF", line: {color:"DC3545", width:2} });
+        s2.addText("Total Defects", { x: 5, y: 2, w: 3, align: 'center', fontSize: 14 });
+        s2.addText(def, { x: 5, y: 2.5, w: 3, align: 'center', fontSize: 32, bold: true, color: "DC3545" });
+
+        s2.addShape(pptx.ShapeType.rect, { x: 9, y: 1.5, w: 3, h: 2, fill: "FFFFFF", line: {color:"E36C09", width:2} });
+        s2.addText("Rejection Rate", { x: 9, y: 2, w: 3, align: 'center', fontSize: 14 });
+        s2.addText(rate, { x: 9, y: 2.5, w: 3, align: 'center', fontSize: 32, bold: true, color: "E36C09" });
+
+        // SLIDE 3: Charts
+        let s3 = pptx.addSlide();
+        s3.addText("Trend & Pareto Analysis", { x: 0.5, y: 0.5, fontSize: 18, color: "002060" });
+        try { if(chartInstances['mo_trend']) s3.addImage({ data: chartInstances['mo_trend'].getImageURI(), x: 0.5, y: 1, w: 6, h: 3 }); } catch(e){}
+        try { if(chartInstances['mo_pareto']) s3.addImage({ data: chartInstances['mo_pareto'].getImageURI(), x: 7, y: 1, w: 6, h: 3 }); } catch(e){}
+        
+        // SLIDE 4: Model Analysis
+        let s4 = pptx.addSlide();
+        s4.addText("Model Wise Breakdown", { x: 0.5, y: 0.5, fontSize: 18, color: "002060" });
+        try { if(chartInstances['mo_model']) s4.addImage({ data: chartInstances['mo_model'].getImageURI(), x: 1, y: 1.5, w: 11, h: 4 }); } catch(e){}
+
+    } else if (type === 'Defect') {
+        let s3 = pptx.addSlide();
+        s3.addText("Defect Contribution", { x: 0.5, y: 0.5, fontSize: 18, color: "002060" });
+        try { if(chartInstances['Defect']) s3.addImage({ data: chartInstances['Defect'].getImageURI(), x: 1, y: 1.5, w: 10, h: 4 }); } catch(e){}
+    }
+
+    pptx.writeFile({ fileName: `Califonix_${type}_Report.pptx` });
 }
 </script>
 </body>
