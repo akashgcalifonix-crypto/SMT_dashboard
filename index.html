@@ -461,7 +461,10 @@ let chartInstances = {};
 google.charts.load('current', {'packages':['corechart', 'bar']});
 
 window.onload = () => {
-    const today = new Date().toISOString().split('T')[0];
+    // Force Local Time for Input Default
+    const d = new Date();
+    const today = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    
     document.getElementById('e_date').value = today;
     document.getElementById('dash_from').value = today;
     document.getElementById('mo_picker').value = today.substring(0, 7);
@@ -614,14 +617,21 @@ function renderDash(){
   let mMode = {}, mDef = {};
 
   currentData.forEach((r, idx) => {
-    if(r[0] < from || r[0] > to) return;
+    // FIX: Normalize date to YYYY-MM-DD by removing any time part (e.g. T00:00:00.000Z)
+    let rawDate = r[0] || "";
+    let rowDate = rawDate.length > 10 ? rawDate.substring(0, 10) : rawDate; 
+    
+    if(rowDate < from || rowDate > to) return;
+    
     let ln = +r[1], inp = +r[3], def = +r[4];
     stats.all_i += inp; stats.all_d += def;
     if(ln<=8) { stats.f1_i+=inp; stats.f1_d+=def; } else if(ln<=16) { stats.f2_i+=inp; stats.f2_d+=def; } else { stats.fb_i+=inp; stats.fb_d+=def; }
     if(!mMode[r[2]]) mMode[r[2]]={d:0}; mMode[r[2]].d+=def;
     try { JSON.parse(r[7]).forEach(d=>{ if(!mDef[d.name]) mDef[d.name]=0; mDef[d.name]+=(+d.qty); }); } catch(e){}
     let clr = parseFloat(r[5]) > 1 ? 'red' : (parseFloat(r[5])>0?'orange':'green');
-    tBody.innerHTML += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td><b>${r[2]}</b></td><td>${inp}</td><td>${def}</td><td style="color:${clr};font-weight:bold;">${formatPct(r[5])}</td><td><button class="btn-info" onclick='previewEntryFromRow(${idx}, ${JSON.stringify(r)})'>View</button> <button class="btn-blue" onclick='editRow(${idx}, ${JSON.stringify(r)})'>Edit</button></td></tr>`;
+    
+    // Display original rawDate or rowDate? Keep original but filtering works on rowDate
+    tBody.innerHTML += `<tr><td>${rowDate}</td><td>${r[8]}</td><td>${r[1]}</td><td><b>${r[2]}</b></td><td>${inp}</td><td>${def}</td><td style="color:${clr};font-weight:bold;">${formatPct(r[5])}</td><td><button class="btn-info" onclick='previewEntryFromRow(${idx}, ${JSON.stringify(r)})'>View</button> <button class="btn-blue" onclick='editRow(${idx}, ${JSON.stringify(r)})'>Edit</button></td></tr>`;
   });
   const rate = (d,i) => i>0 ? (d/i*100).toFixed(2)+"%" : "0.00%";
   document.getElementById('k_all').innerText = rate(stats.all_d, stats.all_i);
@@ -637,7 +647,12 @@ function renderDash(){
 }
 
 function editRow(idx, r){
-  showPage('entry'); document.getElementById('e_date').value=r[0]; document.getElementById('e_shift').value=r[8]||'A';
+  showPage('entry'); 
+  // Fix Date for Edit too
+  let rawDate = r[0] || "";
+  document.getElementById('e_date').value = rawDate.length > 10 ? rawDate.substring(0, 10) : rawDate; 
+  
+  document.getElementById('e_shift').value=r[8]||'A';
   document.getElementById('e_line').value=r[1]; document.getElementById('e_model').value=r[2];
   document.getElementById('e_input').value=r[3]; document.getElementById('e_prep').value=r[6];
   document.getElementById('edit_sheet_name').value=r[9]; document.getElementById('edit_index').value=r[10];
@@ -653,7 +668,12 @@ function makeEditable(id) {
 
 function genReport(){
   let s = document.getElementById('r_date_start').value, e = document.getElementById('r_date_end').value;
-  let rData = currentData.filter(r => r[0] >= s && r[0] <= e);
+  // FIX: Normalize date
+  let rData = currentData.filter(r => {
+      let raw = r[0]||"";
+      let d = raw.length > 10 ? raw.substring(0, 10) : raw;
+      return d >= s && d <= e;
+  });
   document.getElementById('print_area').style.display = 'block';
   document.getElementById('r_subtitle').innerText = `${s} to ${e}`;
   processReportData(rData, 'r_inp', 'r_def', 'r_rate_val', 'trend_chart_div', 'pareto_chart_div', 'analysis_list', 'remaining_list', 'model_chart_div');
@@ -668,7 +688,12 @@ function genModelReport(){
 
     document.getElementById('m_name_disp').innerText = selectedModels.join(", ");
     document.getElementById('m_subtitle').innerText = `${s} to ${e}`;
-    let rData = currentData.filter(r => r[0] >= s && r[0] <= e && selectedModels.includes(r[2]));
+    // FIX: Normalize date
+    let rData = currentData.filter(r => {
+        let raw = r[0]||"";
+        let d = raw.length > 10 ? raw.substring(0, 10) : raw;
+        return d >= s && d <= e && selectedModels.includes(r[2]);
+    });
     document.getElementById('model_print_area').style.display = 'block';
     processReportData(rData, 'm_inp', 'm_def', 'm_rate_val', 'm_trend_chart', 'm_pareto_chart', 'm_analysis_list', 'm_remaining_list');
     makeEditable('m_analysis_list');
@@ -676,8 +701,9 @@ function genModelReport(){
     // POPULATE EXCEL TABLE FOR MODEL
     let xlsHtml = "";
     rData.forEach(r => {
+        let dStr = (r[0]||"").substring(0,10);
         try { JSON.parse(r[7]).forEach(d => {
-            xlsHtml += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.ref||''}</td><td>${d.analysis||''}</td></tr>`;
+            xlsHtml += `<tr><td>${dStr}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.ref||''}</td><td>${d.analysis||''}</td></tr>`;
         }); } catch(e){}
     });
     document.getElementById('excel_body').innerHTML = xlsHtml;
@@ -688,11 +714,17 @@ function genDefectWiseReport(){
     let def = document.getElementById('d_defect_select').value;
     document.getElementById('d_name_disp').innerText = def;
     document.getElementById('d_subtitle').innerText = `${s} to ${e}`;
-    let rData = currentData.filter(r => r[0] >= s && r[0] <= e);
+    // FIX: Normalize date
+    let rData = currentData.filter(r => {
+        let raw = r[0]||"";
+        let d = raw.length > 10 ? raw.substring(0, 10) : raw;
+        return d >= s && d <= e;
+    });
     let mStats = {}, totQty = 0, anaList = [];
     let xlsHtml = "";
     
     rData.forEach(r => {
+        let dStr = (r[0]||"").substring(0,10);
         try { JSON.parse(r[7]).forEach(d => {
             if(d.name === def) {
                 let q = +d.qty; totQty += q;
@@ -701,7 +733,7 @@ function genDefectWiseReport(){
                 if(d.analysis) anaList.push({m:r[2], a:d.analysis, ac:d.action});
                 
                 // ADD TO EXCEL TABLE
-                xlsHtml += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.analysis||''}</td></tr>`;
+                xlsHtml += `<tr><td>${dStr}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.analysis||''}</td></tr>`;
             }
         }); } catch(e){}
     });
@@ -725,7 +757,11 @@ function genDefectWiseReport(){
 function genMonthReport() {
     let mo = document.getElementById('mo_picker').value; 
     if(!mo) return alert("Select Month");
-    let rData = currentData.filter(r => r[0].startsWith(mo));
+    // Date normalize not strictly needed for startsWith but good practice
+    let rData = currentData.filter(r => {
+        let raw = r[0]||"";
+        return raw.startsWith(mo);
+    });
     document.getElementById('month_report').style.display = 'block';
     document.getElementById('month_print_area').style.display = 'block';
     document.getElementById('mo_subtitle').innerText = "Month: " + mo;
@@ -736,12 +772,13 @@ function genMonthReport() {
     // POPULATE EXCEL TABLE FOR MONTH
     let xlsHtml = "";
     rData.forEach(r => {
+        let dStr = (r[0]||"").substring(0,10);
         let defects = []; try { defects = JSON.parse(r[7]); } catch(e){}
         if(defects.length === 0) {
-            xlsHtml += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>-</td><td>0</td><td>-</td><td>-</td></tr>`;
+            xlsHtml += `<tr><td>${dStr}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>-</td><td>0</td><td>-</td><td>-</td></tr>`;
         } else {
             defects.forEach(d => {
-                xlsHtml += `<tr><td>${r[0]}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.ref||''}</td><td>${d.analysis||''}</td></tr>`;
+                xlsHtml += `<tr><td>${dStr}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.ref||''}</td><td>${d.analysis||''}</td></tr>`;
             });
         }
     });
@@ -755,7 +792,11 @@ function genMonthReport() {
 function processReportData(rData, inpId, defId, rateId, trendId, paretoId, anaId, remId, modelChartId){
   let totInp=0, totDef=0, dateMap = {}, modelMap = {}, defectsMap = {};
   rData.forEach(r => {
-    let d = r[0], inp = +r[3], df = +r[4]; totInp += inp; totDef += df;
+    // FIX: Normalize date for grouping
+    let raw = r[0]||"";
+    let d = raw.length > 10 ? raw.substring(0, 10) : raw;
+    
+    let inp = +r[3], df = +r[4]; totInp += inp; totDef += df;
     if(!dateMap[d]) dateMap[d] = {i:0, d:0}; dateMap[d].i += inp; dateMap[d].d += df;
     if(modelChartId) { if(!modelMap[r[2]]) modelMap[r[2]] = {i:0, d:0}; modelMap[r[2]].i += inp; modelMap[r[2]].d += df; }
     try { JSON.parse(r[7]).forEach(item => {
