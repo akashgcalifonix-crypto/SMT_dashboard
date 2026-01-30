@@ -138,7 +138,6 @@
   .category-switch { display: flex; justify-content: center; margin-bottom: 30px; }
   .cat-btn { padding: 15px 50px; border: 1px solid #ccc; background: #e9ecef; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; flex: 1; max-width: 300px; text-align: center; color: #555; }
   .cat-btn:first-child { border-radius: 30px 0 0 30px; border-right: none; }
-  .cat-btn:last-child { border-radius: 0 30px 30px 0; border-left: none; }
   .cat-btn.active-buds { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,32,96,0.3); z-index: 1; }
   .cat-btn.active-case { background: var(--secondary); color: white; border-color: var(--secondary); box-shadow: 0 4px 10px rgba(227,108,9,0.3); z-index: 1; }
   
@@ -257,7 +256,7 @@
     </div>
   </div>
 
-  <!-- REPORTS (Html remains same, updated script handles date stripping) -->
+  <!-- REPORTS -->
   <div id="report" style="display:none;">
     <div class="form-grid no-print">
       <div><label>From Date</label><input type="date" id="r_date_start"></div>
@@ -331,15 +330,12 @@ google.charts.load('current', {'packages':['corechart', 'bar']});
 // HELPER: Normalize Date properly converting UTC to Local (IST)
 function normalizeDate(dateStr) {
     if (!dateStr) return "";
-    // Creates date object from string. If it's UTC (e.g. ends in Z), 
-    // toLocaleDateString('en-CA') converts it to Local System Time YYYY-MM-DD
     const d = new Date(dateStr);
-    if(isNaN(d)) return dateStr; // Fallback
+    if(isNaN(d)) return dateStr; 
     return d.toLocaleDateString('en-CA');
 }
 
 window.onload = () => {
-    // 1. Get correct LOCAL date in YYYY-MM-DD format
     const today = new Date().toLocaleDateString('en-CA');
     document.getElementById('e_date').value = today;
     document.getElementById('dash_from').value = today;
@@ -465,22 +461,10 @@ async function deleteRow(idx){
     let r = currentData[idx];
     let sheet = r[9]; // Sheet Name
     let rowId = r[10]; // Row Index
-    
     if(!API_URL.includes("script.google.com")){ alert("API URL Missing"); return; }
     document.getElementById('loader').style.display = 'block';
-    
-    // Construct Delete Payload
     let payload = { action: "delete", category: currentCategory, sheetName: sheet, rowIndex: rowId };
-    
-    try { 
-        await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) }); 
-        alert("🗑️ Record Deleted!"); 
-        location.reload(); 
-    } catch(e) { 
-        alert("❌ Error Deleting"); 
-    } finally { 
-        document.getElementById('loader').style.display = 'none'; 
-    }
+    try { await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) }); alert("🗑️ Record Deleted!"); location.reload(); } catch(e) { alert("❌ Error Deleting"); } finally { document.getElementById('loader').style.display = 'none'; }
 }
 
 async function loadAllData(){
@@ -494,19 +478,18 @@ function renderDash(){
   let mMode = {}, mDef = {};
 
   currentData.forEach((r, idx) => {
-    // FIX: Normalize date strictly using Local Timezone logic
     let rowDate = normalizeDate(r[0]);
-    
     if(rowDate < from || rowDate > to) return;
     
     let ln = +r[1], inp = +r[3], def = +r[4];
     stats.all_i += inp; stats.all_d += def;
     if(ln<=8) { stats.f1_i+=inp; stats.f1_d+=def; } else if(ln<=16) { stats.f2_i+=inp; stats.f2_d+=def; } else { stats.fb_i+=inp; stats.fb_d+=def; }
-    if(!mMode[r[2]]) mMode[r[2]]={d:0}; mMode[r[2]].d+=def;
+    
+    if(!mMode[r[2]]) mMode[r[2]]={d:0, i:0}; 
+    mMode[r[2]].d+=def; mMode[r[2]].i+=inp;
+    
     try { JSON.parse(r[7]).forEach(d=>{ if(!mDef[d.name]) mDef[d.name]=0; mDef[d.name]+=(+d.qty); }); } catch(e){}
     let clr = parseFloat(r[5]) > 1 ? 'red' : (parseFloat(r[5])>0?'orange':'green');
-    
-    // Added DELETE button
     tBody.innerHTML += `<tr><td>${rowDate}</td><td>${r[8]}</td><td>${r[1]}</td><td><b>${r[2]}</b></td><td>${inp}</td><td>${def}</td><td style="color:${clr};font-weight:bold;">${formatPct(r[5])}</td><td><button class="btn-info" onclick='previewEntryFromRow(${idx})'>View</button> <button class="btn-blue" onclick='editRow(${idx})'>Edit</button> <button class="btn-red" onclick='deleteRow(${idx})'>Del</button></td></tr>`;
   });
   const rate = (d,i) => i>0 ? (d/i*100).toFixed(2)+"%" : "0.00%";
@@ -515,15 +498,27 @@ function renderDash(){
   document.getElementById('k_f2').innerText = rate(stats.f2_d, stats.f2_i);
   document.getElementById('k_fb').innerText = rate(stats.fb_d, stats.fb_i);
   
-  let mA = [['Model','Defects',{role:'annotation'}]], dA = [['Defect','Qty',{role:'annotation'}]];
-  Object.keys(mMode).sort((a,b)=>mMode[b].d-mMode[a].d).slice(0,5).forEach(k=>mA.push([k,mMode[k].d,mMode[k].d]));
-  Object.keys(mDef).sort((a,b)=>mDef[b]-mDef[a]).slice(0,5).forEach(k=>dA.push([k,mDef[k],mDef[k]]));
-  new google.visualization.ColumnChart(document.getElementById('dash_chart_model')).draw(google.visualization.arrayToDataTable(mA), {title:'Top Models', legend:'none', colors:['#002060']});
-  new google.visualization.ColumnChart(document.getElementById('dash_chart_defect')).draw(google.visualization.arrayToDataTable(dA), {title:'Top Defects', legend:'none', colors:['#dc3545']});
+  // Model Chart - Sorted by Defect Qty
+  let mA = [['Model','Defect Qty',{role:'annotation'}]];
+  Object.keys(mMode).sort((a,b)=>mMode[b].d - mMode[a].d).slice(0,5).forEach(k => {
+      let r = mMode[k].i > 0 ? (mMode[k].d / mMode[k].i * 100) : 0;
+      mA.push([k, mMode[k].d, mMode[k].d + "\n(" + r.toFixed(2) + "%)"]);
+  });
+
+  // Defect Chart - Sorted by Qty
+  let dA = [['Defect','Qty',{role:'annotation'}]];
+  let totalDefects = stats.all_d || 1; 
+  Object.keys(mDef).sort((a,b)=>mDef[b]-mDef[a]).slice(0,5).forEach(k => {
+      let contrib = (mDef[k] / totalDefects * 100);
+      dA.push([k, mDef[k], mDef[k] + "\n(" + contrib.toFixed(2) + "%)"]);
+  });
+
+  new google.visualization.ColumnChart(document.getElementById('dash_chart_model')).draw(google.visualization.arrayToDataTable(mA), {title:'Top Models (Qty & Rate%)', legend:'none', colors:['#002060']});
+  new google.visualization.ColumnChart(document.getElementById('dash_chart_defect')).draw(google.visualization.arrayToDataTable(dA), {title:'Top Defects (Qty & Contrib%)', legend:'none', colors:['#dc3545']});
 }
 
 function editRow(idx){
-  let r = currentData[idx]; // Fetch row data safely
+  let r = currentData[idx]; 
   showPage('entry'); 
   document.getElementById('e_date').value = normalizeDate(r[0]); 
   document.getElementById('e_shift').value=r[8]||'A';
@@ -574,14 +569,21 @@ function genDefectWiseReport(){
         }); } catch(e){}
     });
     document.getElementById('d_tot_qty').innerText = totQty; document.getElementById('d_aff_models').innerText = Object.keys(mStats).length;
-    let chartData = [['Model', 'Qty', {role:'annotation'}]], tblHtml = "";
-    Object.keys(mStats).sort((a,b)=>mStats[b].q-mStats[a].q).forEach(m => { chartData.push([m, mStats[m].q, mStats[m].q]); tblHtml += `<tr><td>${m}</td><td>${mStats[m].i}</td><td><b>${mStats[m].q}</b></td><td>${(mStats[m].q/mStats[m].i*100).toFixed(2)}%</td></tr>`; });
+    
+    // Defect Contribution by Model (Sorted by Qty)
+    let chartData = [['Model', 'Defect Qty', {role:'annotation'}]], tblHtml = "";
+    Object.keys(mStats).sort((a,b)=>mStats[b].q-mStats[a].q).forEach(m => {
+        let rate = mStats[m].i > 0 ? (mStats[m].q / mStats[m].i * 100) : 0;
+        chartData.push([m, mStats[m].q, mStats[m].q + " (" + rate.toFixed(2)+"%)"]); 
+        tblHtml += `<tr><td>${m}</td><td>${mStats[m].i}</td><td><b>${mStats[m].q}</b></td><td>${rate.toFixed(2)}%</td></tr>`; 
+    });
+
     document.getElementById('defect_detail_body').innerHTML = tblHtml;
     document.getElementById('d_analysis_list').innerHTML = anaList.map(x => `<div class="analysis-item"><h5>${x.m}</h5><p contenteditable="true">${x.a}</p></div>`).join("");
     document.getElementById('defect_excel_body').innerHTML = xlsHtml;
     document.getElementById('defect_print_area').style.display='block';
     chartInstances['Defect'] = new google.visualization.ColumnChart(document.getElementById('d_contrib_chart'));
-    chartInstances['Defect'].draw(google.visualization.arrayToDataTable(chartData), {legend:'none', colors:['#E36C09']});
+    chartInstances['Defect'].draw(google.visualization.arrayToDataTable(chartData), {legend:'none', title:'Model-wise Defect Qty & Rate %', colors:['#E36C09']});
 }
 
 function genMonthReport() {
@@ -612,12 +614,38 @@ function processReportData(rData, inpId, defId, rateId, trendId, paretoId, anaId
     if(modelChartId) { if(!modelMap[r[2]]) modelMap[r[2]] = {i:0, d:0}; modelMap[r[2]].i += inp; modelMap[r[2]].d += df; }
     try { JSON.parse(r[7]).forEach(item => { let n = item.name; if(!defectsMap[n]) defectsMap[n] = {qty:0, anaList:[]}; defectsMap[n].qty += (+item.qty); if(item.analysis) defectsMap[n].anaList.push(item.analysis); }); } catch(e){}
   });
+  
   document.getElementById(inpId).innerText = totInp; document.getElementById(defId).innerText = totDef; document.getElementById(rateId).innerText = totInp>0 ? (totDef/totInp*100).toFixed(2)+"%" : "0.00%";
+  
+  // Trend Chart (Line chart usually shows % trend, keeping as %)
   let tData = [['Date', 'Rej %', {role:'annotation'}]]; Object.keys(dateMap).sort().forEach(k => { let v = dateMap[k].i>0?dateMap[k].d/dateMap[k].i*100:0; tData.push([k, v, v.toFixed(1)+'%']); });
-  let tChart = new google.visualization.LineChart(document.getElementById(trendId)); tChart.draw(google.visualization.arrayToDataTable(tData), {title:'Rejection Trend', legend:'none', pointSize:5, colors:['#002060']}); if(trendId === 'mo_trend_chart') chartInstances['mo_trend'] = tChart;
-  if(modelChartId) { let mData = [['Model', 'Defects', {role:'annotation'}]]; Object.keys(modelMap).sort((a,b)=>modelMap[b].d-modelMap[a].d).slice(0,10).forEach(m=>mData.push([m, modelMap[m].d, modelMap[m].d])); let mChart = new google.visualization.ColumnChart(document.getElementById(modelChartId)); mChart.draw(google.visualization.arrayToDataTable(mData), {title:'Top Models', legend:'none', colors:['#218838']}); if(modelChartId === 'mo_model_chart') chartInstances['mo_model'] = mChart; }
+  let tChart = new google.visualization.LineChart(document.getElementById(trendId)); tChart.draw(google.visualization.arrayToDataTable(tData), {title:'Rejection Trend %', legend:'none', pointSize:5, colors:['#002060']}); if(trendId === 'mo_trend_chart') chartInstances['mo_trend'] = tChart;
+  
+  // Model Chart (Updated to Sort by Qty, Show Qty & %)
+  if(modelChartId) { 
+      let mData = [['Model', 'Defect Qty', {role:'annotation'}]]; 
+      Object.keys(modelMap).sort((a,b)=>modelMap[b].d - modelMap[a].d).slice(0,10).forEach(k => {
+          let rate = modelMap[k].i > 0 ? (modelMap[k].d / modelMap[k].i * 100) : 0;
+          mData.push([k, modelMap[k].d, modelMap[k].d + "\n(" + rate.toFixed(2)+ "%)"]);
+      }); 
+      let mChart = new google.visualization.ColumnChart(document.getElementById(modelChartId)); 
+      mChart.draw(google.visualization.arrayToDataTable(mData), {title:'Top Models by Defect Qty', legend:'none', colors:['#218838']}); 
+      if(modelChartId === 'mo_model_chart') chartInstances['mo_model'] = mChart; 
+  }
+  
+  // Pareto Chart (Updated to Sort by Qty, Show Qty & %)
   let sDef = Object.keys(defectsMap).map(k=>({n:k, ...defectsMap[k]})).sort((a,b)=>b.qty-a.qty);
-  if(paretoId){ let pData = [['Defect', 'Qty', {role:'annotation'}]]; sDef.slice(0,10).forEach(s=>pData.push([s.n, s.qty, s.qty])); let pChart = new google.visualization.ColumnChart(document.getElementById(paretoId)); pChart.draw(google.visualization.arrayToDataTable(pData), {title:'Defect Pareto', legend:'none', colors:['#dc3545']}); if(paretoId === 'mo_pareto_chart') chartInstances['mo_pareto'] = pChart; }
+  if(paretoId){ 
+      let pData = [['Defect', 'Qty', {role:'annotation'}]]; 
+      sDef.slice(0,10).forEach(s => {
+          let contrib = totDef > 0 ? (s.qty / totDef * 100) : 0;
+          pData.push([s.n, s.qty, s.qty + "\n(" + contrib.toFixed(1)+"%)"]);
+      }); 
+      let pChart = new google.visualization.ColumnChart(document.getElementById(paretoId)); 
+      pChart.draw(google.visualization.arrayToDataTable(pData), {title:'Defect Pareto (Qty)', legend:'none', colors:['#dc3545']}); 
+      if(paretoId === 'mo_pareto_chart') chartInstances['mo_pareto'] = pChart; 
+  }
+  
   if(anaId){ document.getElementById(anaId).innerHTML = sDef.slice(0,5).map(s => `<div class="analysis-item"><div><h5>${s.n} (Qty: ${s.qty})</h5><p class="editable">${[...new Set(s.anaList)].join(', ') || 'No Analysis'}</p></div></div>`).join(""); }
   if(remId){ document.getElementById(remId).innerHTML = sDef.slice(5).map(s => `<tr><td>${s.n}</td><td>${s.qty}</td><td>${(s.qty/totInp*100).toFixed(2)}%</td></tr>`).join(""); }
 }
@@ -643,5 +671,3 @@ function downloadProfessionalPPT(type) {
 </script>
 </body>
 </html>
-
-
