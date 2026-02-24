@@ -321,7 +321,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbweFBgyW1LR3SLr0wHrt_dUXRXmN1qGwNjbmhcmCTLMzjm3wjTeNA1wofzAz801zEvmng/exec";
 const LOGO_URL = "https://i.postimg.cc/5y7SN4xc/logo.png";
 const MASTER_MODELS=["Ad Unity ANC","Ace","Ad 111v2","Ad 118","Ad 120","Ad 121Pro Plus","Ad 131 Elite Anc","Ad 131 Gen 2","Ad 131 Pro Buds","Ad 138 Gen 2","Ad 141 Anc","Ad 141 Anc Elite","Ad 141 Gen 2","Ad 141 Pro Buds","Ad 148 Gen 2","Ad 155","Ad 161 Anc","Ad 161 Anc Elite","Ad 161 N","Ad 181 Pro","Ad 191 Anc","Ad 192","Ad 212","Ad 213","Ad 280 Anc","Ad 300","Ad 301","Ad 311 Pro","Ad 313","Ad 701 Anc","AD 71","Ad 800","Ad 800 Hidef","Ad 91","Ad 91 Prime","Ad Ace Gen 2","Ad Alpha Gen 2","AD Hype","AD Kick","Ad Nirvana Crystal","Ad Nirvana Iris","Ad Nirvana X","Ad Plus 311","Ad Plus 318","Ad Prime 412","Ad Prime 513 Anc","Ad Primo","Ad Pulse","AD Supreme","Ad Ultra Pro","Ad100","Ad121 Pro","Ad125","Ad131","Ad131 Pro","Ad138","Ad138 Pro","Ad141","Ad148","Ad161","AD161 Pro-Buds","AD163","Ad170","AD181","AD183","Ad190","AD191 G","Airdopes 207","Alpha","Amazon basics","Atom 81 Pro","Atom 83","Atom81","Dashcam Hive E1","Dashcam Hive F1","HMD P50","HMD P60","HMD P70","HMD S60","HMD X50","HMD X50 Pro","IMT 100","IMT101","IMT121","IMT128","IMT131","IMT161","IMT181","Joy","Max","Nirvana","Nirvana Ion (ANC)","Nirvana Ion ANC Pro","Nirvana ION N Mold","R 195 Pro","Ultra Plus","Zing"];
-const MASTER_DEFECTS=["Body Sensor Fail","Single LED glow","Channel Fail","SMD Component damaged","DUT Mode Fail","Electric sound","Heating","High Current","Enquiry","LED Not glow","LED Miss","Low current","Secondary MIC Fail","Talk MIC Fail","Not On","POGO Pin shift","POGO Pin Miss","Software skip","RF Fail","CTC Fail","Speaker Fail","Scrap","Extra Burr","Hall Sensor","Sleep mode","Key Not work","Charging not stored","FPC connector issue","Mic Distortion"];
+const MASTER_DEFECTS=["Body Sensor Fail","Single LED glow","Channel Fail","SMD Component damaged","DUT Mode Fail","Electric sound","Heating","High Current","Enquiry","LED Not glow","LED Auto glow ","LED Miss","Low current","Secondary MIC Fail","Talk MIC Fail","Not On","POGO Pin shift","POGO Pin Miss","Software skip","RF Fail","CTC Fail","Speaker Fail","Scrap","Extra Burr","Hall Sensor","Sleep mode","Key Not work","Charging not stored","FPC connector issue","Mic Distortion"];
 
 const CONFIG = { Earbuds: { defects: MASTER_DEFECTS, models: MASTER_MODELS }, ChargingCase: { defects: MASTER_DEFECTS, models: MASTER_MODELS } };
 let currentCategory="Earbuds", rawData={earbuds:[],charging_case:[]}, currentData=[], chartInstances={}; 
@@ -671,3 +671,4 @@ function downloadProfessionalPPT(type) {
 </script>
 </body>
 </html>
+
