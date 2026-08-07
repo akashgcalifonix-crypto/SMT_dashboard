@@ -1161,215 +1161,311 @@ function exportCustomExcel(tableId, filename) {
 }
 
 /* -------------------------------------------------------------------------
-   MASSIVE MULTI-SHEET EXCEL EXPORTER (SHEETJS) - NEW FUNCTION ADDED
+   MASSIVE MULTI-SHEET EXCEL EXPORTER (EXCELJS) - PERFECT FORMAT MATCH
 ------------------------------------------------------------------------- */
 function generateMasterExcel() {
     let moStr = document.getElementById('mo_picker').value; 
     if(!moStr) return alert("Please select a month first!");
     
     document.getElementById('loader').style.display = 'flex';
-    document.querySelector('#loader h3').innerText = "Generating Master Workbook...";
+    document.querySelector('#loader h3').innerText = "Applying Formats & Generating Excel...";
 
-    setTimeout(() => {
-        try {
-            // Combine all categories for the master report
-            let allRawData = [];
-            rawData.earbuds.forEach(r => allRawData.push([...r, 'Earbuds']));
-            rawData.charging_case.forEach(r => allRawData.push([...r, 'Charging Case']));
+    // Dynamically load ExcelJS so we don't need to change the HTML header
+    if (typeof ExcelJS === 'undefined') {
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js";
+        script.onload = () => buildFormattedExcel(moStr);
+        document.head.appendChild(script);
+    } else {
+        buildFormattedExcel(moStr);
+    }
+}
 
-            // Filter for Selected Month & Prev Month
-            let currMonthData = allRawData.filter(r => normalizeDate(r[0]).startsWith(moStr));
-            let dObj = new Date(moStr + "-01");
-            dObj.setMonth(dObj.getMonth() - 1);
-            let prevMoStr = dObj.toISOString().substring(0,7);
-            let prevMonthData = allRawData.filter(r => normalizeDate(r[0]).startsWith(prevMoStr));
+async function buildFormattedExcel(moStr) {
+    try {
+        // --- 1. PREPARE THE DATA ---
+        let allRawData = [];
+        rawData.earbuds.forEach(r => allRawData.push([...r, 'Earbuds']));
+        rawData.charging_case.forEach(r => allRawData.push([...r, 'Charging Case']));
 
-            let wb = XLSX.utils.book_new();
+        let currMonthData = allRawData.filter(r => normalizeDate(r[0]).startsWith(moStr));
+        let dObj = new Date(moStr + "-01");
+        dObj.setMonth(dObj.getMonth() - 1);
+        let prevMoStr = dObj.toISOString().substring(0,7);
+        let prevMonthData = allRawData.filter(r => normalizeDate(r[0]).startsWith(prevMoStr));
+
+        let totInp = 0, totDef = 0, prevInp = 0, prevDef = 0;
+        let defectMap = {}, modelMap = {}, matrixMap = {}, weeklyMap = {};
+        let uniqueDefectsForMatrix = new Set();
+        let rawDaily = [], rawDefect = [];
+
+        prevMonthData.forEach(r => { prevInp += (+r[3]); prevDef += (+r[4]); });
+        let prevRate = prevInp > 0 ? (prevDef/prevInp*100) : 0;
+
+        let moName = new Date(moStr + "-01").toLocaleString('en-US', {month:'long', year:'numeric'}).toUpperCase();
+        let shortMo = new Date(moStr + "-01").toLocaleString('en-US', {month:'short', year:'numeric'});
+
+        currMonthData.forEach(r => {
+            let date = normalizeDate(r[0]), line = r[1], mod = r[2], inp = +r[3], def = +r[4], rateStr = formatPct(r[5]), prep = r[6], shift = r[8], cat = r[11];
+            totInp += inp; totDef += def;
             
-            // --- DATA AGGREGATIONS ---
-            let totInp = 0, totDef = 0;
-            let prevInp = 0, prevDef = 0;
+            if(!modelMap[mod]) modelMap[mod] = {cat: cat, inp:0, def:0};
+            modelMap[mod].inp += inp; modelMap[mod].def += def;
             
-            let defectMap = {}; // name -> {qty, occ}
-            let modelMap = {}; // name -> {cat, inp, def}
-            let matrixMap = {}; // model -> {cat, defects:{dname: qty}}
-            let uniqueDefectsForMatrix = new Set();
-            let weeklyMap = {}; // wk -> {dateRng, inp, def}
+            if(!matrixMap[mod]) matrixMap[mod] = {cat: cat, defects: {}};
             
-            let rawDailyAoa = [['Date', 'Category', 'Model', 'Line', 'Shift', 'Prepared By', 'Input Qty', 'Total Defect Qty', 'Rejection %']];
-            let rawDefectAoa = [['Date', 'Category', 'Model', 'Line', 'Shift', 'Defect Name', 'Defect Qty', 'Analysis / Root Cause']];
+            let day = parseInt(date.split('-')[2]);
+            let wkNum = Math.ceil(day / 7);
+            if(wkNum > 5) wkNum = 5;
+            let wkKey = `Week ${wkNum}`;
+            if(!weeklyMap[wkKey]) weeklyMap[wkKey] = {inp:0, def:0, startDay: (wkNum-1)*7+1, endDay: Math.min(wkNum*7, new Date(dObj.getFullYear(), dObj.getMonth()+2, 0).getDate())};
+            weeklyMap[wkKey].inp += inp; weeklyMap[wkKey].def += def;
 
-            // Prev Month Stats
-            prevMonthData.forEach(r => { prevInp += (+r[3]); prevDef += (+r[4]); });
-            let prevRate = prevInp > 0 ? (prevDef/prevInp*100) : 0;
+            rawDaily.push([date, cat, mod, line, shift, prep, inp, def, rateStr]);
 
-            // Curr Month Processing
-            currMonthData.forEach(r => {
-                let date = normalizeDate(r[0]);
-                let line = r[1], mod = r[2], inp = +r[3], def = +r[4], rateStr = formatPct(r[5]), prep = r[6], shift = r[8], cat = r[11];
-                
-                totInp += inp; totDef += def;
-                
-                // Model Aggregation
-                if(!modelMap[mod]) modelMap[mod] = {cat: cat, inp:0, def:0};
-                modelMap[mod].inp += inp; modelMap[mod].def += def;
-                
-                // Matrix Aggregation
-                if(!matrixMap[mod]) matrixMap[mod] = {cat: cat, defects: {}};
-                
-                // Weekly Aggregation
-                let day = parseInt(date.split('-')[2]);
-                let wkNum = Math.ceil(day / 7);
-                if(wkNum > 5) wkNum = 5;
-                let wkKey = `Week ${wkNum}`;
-                if(!weeklyMap[wkKey]) weeklyMap[wkKey] = {inp:0, def:0};
-                weeklyMap[wkKey].inp += inp;
-                weeklyMap[wkKey].def += def;
-
-                // Raw Daily
-                rawDailyAoa.push([date, cat, mod, line, shift, prep, inp, def, rateStr]);
-
-                try {
-                    JSON.parse(r[7]).forEach(d => {
-                        let dName = d.name;
-                        let dQty = +d.qty;
-                        
-                        // Defect Map (Pareto)
-                        if(!defectMap[dName]) defectMap[dName] = {qty:0, occ:0};
-                        defectMap[dName].qty += dQty;
-                        defectMap[dName].occ += 1;
-                        
-                        // Matrix
-                        if(!matrixMap[mod].defects[dName]) matrixMap[mod].defects[dName] = 0;
-                        matrixMap[mod].defects[dName] += dQty;
-                        uniqueDefectsForMatrix.add(dName);
-                        
-                        // Raw Defect
-                        rawDefectAoa.push([date, cat, mod, line, shift, dName, dQty, d.analysis || ""]);
-                    });
-                } catch(e){}
-            });
-
-            let currRate = totInp > 0 ? (totDef/totInp*100) : 0;
-            let diffRate = currRate - prevRate;
-            let diffStr = (diffRate > 0 ? "+" : "") + diffRate.toFixed(2) + "%";
-
-            // --- SHEET 1: Dashboard ---
-            let dashDateStr = new Date(moStr + "-01").toLocaleString('en-US', {month:'long', year:'numeric'}).toUpperCase();
-            let dashAoa = [
-                [`${dashDateStr} — SMT / PCBA QUALITY REVIEW`],
-                ["CF Factory (Califonix) | ODM Supplier Quality — Earbuds & Charging Case"],
-                [],
-                ["TOTAL INPUT QTY", "TOTAL DEFECT QTY", "REJECTION %", "vs PREV MONTH REJECTION %"],
-                [totInp, totDef, currRate.toFixed(2)+"%", diffStr],
-                [],
-                ["(Note: Graphical charts are best viewed in the web dashboard interface.)"]
-            ];
-            let ws1 = XLSX.utils.aoa_to_sheet(dashAoa);
-            XLSX.utils.book_append_sheet(wb, ws1, "Dashboard");
-
-            // --- SHEET 2: Defect Analysis (Pareto) ---
-            let paretoAoa = [['Rank', 'Defect Name', 'Total Qty', 'Occurrence', '% Contribution', 'Cumulative %', 'Pareto Class']];
-            let sortedDefects = Object.keys(defectMap).map(k => ({n:k, q:defectMap[k].qty, o:defectMap[k].occ})).sort((a,b)=>b.q-a.q);
-            let cumQty = 0;
-            sortedDefects.forEach((d, idx) => {
-                let pct = totDef > 0 ? (d.q / totDef) : 0;
-                cumQty += d.q;
-                let cumPct = totDef > 0 ? (cumQty / totDef) : 0;
-                let pClass = cumPct <= 0.8 ? "A - Vital Few" : (cumPct <= 0.95 ? "B - Useful Many" : "C - Trivial Many");
-                paretoAoa.push([idx+1, d.n, d.q, d.o, (pct*100).toFixed(2)+"%", (cumPct*100).toFixed(2)+"%", pClass]);
-            });
-            let ws2 = XLSX.utils.aoa_to_sheet(paretoAoa);
-            XLSX.utils.book_append_sheet(wb, ws2, "Defect Analysis (Pareto)");
-
-            // --- SHEET 3: Model Performance ---
-            let modPerfAoa = [['Rank', 'Model', 'Category', 'Input Qty', 'Defect Qty', 'Rejection %', 'Rejection Level']];
-            let sortedModels = Object.keys(modelMap).map(k => ({n:k, ...modelMap[k]})).sort((a,b)=>b.def-a.def);
-            sortedModels.forEach((m, idx) => {
-                let rate = m.inp > 0 ? (m.def/m.inp*100) : 0;
-                let lvl = rate > 3.0 ? "High" : (rate >= 1.0 ? "Medium" : "Low");
-                modPerfAoa.push([idx+1, m.n, m.cat, m.inp, m.def, rate.toFixed(2)+"%", lvl]);
-            });
-            let ws3 = XLSX.utils.aoa_to_sheet(modPerfAoa);
-            XLSX.utils.book_append_sheet(wb, ws3, "Model Performance");
-
-            // --- SHEET 4: Model x Defect Matrix ---
-            let uDefs = Array.from(uniqueDefectsForMatrix).sort();
-            let matrixAoa = [['Model', 'Category', ...uDefs]];
-            Object.keys(matrixMap).sort().forEach(m => {
-                let row = [m, matrixMap[m].cat];
-                uDefs.forEach(dName => {
-                    row.push(matrixMap[m].defects[dName] || 0);
+            try {
+                JSON.parse(r[7]).forEach(d => {
+                    let dQty = +d.qty;
+                    if(!defectMap[d.name]) defectMap[d.name] = {qty:0, occ:0};
+                    defectMap[d.name].qty += dQty; defectMap[d.name].occ += 1;
+                    if(!matrixMap[mod].defects[d.name]) matrixMap[mod].defects[d.name] = 0;
+                    matrixMap[mod].defects[d.name] += dQty;
+                    uniqueDefectsForMatrix.add(d.name);
+                    rawDefect.push([date, cat, mod, line, shift, d.name, d.name, dQty, d.analysis || ""]);
                 });
-                matrixAoa.push(row);
-            });
-            let ws4 = XLSX.utils.aoa_to_sheet(matrixAoa);
-            XLSX.utils.book_append_sheet(wb, ws4, "Model x Defect Matrix");
+            } catch(e){}
+        });
 
-            // --- SHEET 5: Model-Wise Detail Report (Flat representation of Rowspan) ---
-            let detailAoa = [['Model Name', 'Total Input', 'Total Model Def %', 'Specific Defect', 'Defect Qty', 'Root Cause / Corrective Action']];
-            Object.keys(matrixMap).sort().forEach(mod => {
-                let mObj = matrixMap[mod];
-                let mPerf = modelMap[mod];
-                let mRateStr = mPerf.inp > 0 ? (mPerf.def/mPerf.inp*100).toFixed(2)+"%" : "0%";
-                
-                let mDefects = [];
-                currMonthData.filter(r => r[2]===mod).forEach(r => {
-                    try{ JSON.parse(r[7]).forEach(d=> mDefects.push(d)); }catch(e){}
-                });
-                
-                let aggMDef = {};
-                mDefects.forEach(d => {
+        let currRate = totInp > 0 ? (totDef/totInp*100) : 0;
+        let diffRate = currRate - prevRate;
+        let diffStr = (diffRate > 0 ? "+" : "") + diffRate.toFixed(2) + "%";
+
+        // --- 2. INITIALIZE WORKBOOK ---
+        const wb = new ExcelJS.Workbook();
+        const borderAll = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        const hdrFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF16365C' } }; 
+        const hdrFont = { color: { argb: 'FFFFFFFF' }, bold: true };
+
+        // Helper to format tables
+        const styleTable = (ws, startRow, rowCount, colCount, useBorders=true) => {
+            ws.getRow(startRow).fill = hdrFill;
+            ws.getRow(startRow).font = hdrFont;
+            ws.getRow(startRow).alignment = { horizontal: 'center', vertical: 'middle' };
+            if(useBorders){
+                for(let r=startRow; r<startRow+rowCount; r++){
+                    for(let c=1; c<=colCount; c++){
+                        ws.getCell(r, c).border = borderAll;
+                    }
+                }
+            }
+        };
+
+        // --- SHEET 1: DASHBOARD ---
+        const ws1 = wb.addWorksheet('Dashboard');
+        ws1.mergeCells('A1:D2');
+        let titleCell = ws1.getCell('A1');
+        titleCell.value = `${moName} — SMT / PCBA QUALITY REVIEW`;
+        titleCell.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
+        titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F4E78' } };
+        titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws1.mergeCells('A3:D3');
+        ws1.getCell('A3').value = `CF Factory (Califonix) | ODM Supplier Quality — Earbuds & Charging Case | Period: 01-${shortMo} to End-${shortMo}`;
+        ws1.getCell('A3').font = { italic: true, color: { argb: 'FF555555' } };
+        ws1.getCell('A3').alignment = { horizontal: 'center' };
+
+        ws1.addRow([]);
+        ws1.addRow(['TOTAL INPUT QTY', 'TOTAL DEFECT QTY', 'REJECTION %', `vs PREV REJECTION %`]);
+        ws1.addRow([totInp, totDef, currRate.toFixed(2)+'%', diffStr]);
+
+        ws1.getRow(5).height = 25;
+        ws1.getRow(6).height = 35;
+        ['A','B','C','D'].forEach((col, i) => { 
+            ws1.getColumn(col).width = 25;
+            let hC = ws1.getCell(col+'5');
+            hC.font = hdrFont; hC.alignment = { horizontal: 'center', vertical: 'middle' };
+            let colors = ['FF2F75B5','FFC00000','FF548235','FFA67C00'];
+            hC.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colors[i] } };
+            hC.border = borderAll;
+            
+            let vC = ws1.getCell(col+'6');
+            vC.font = { size: 18, bold: true, color: { argb: colors[i] } };
+            vC.alignment = { horizontal: 'center', vertical: 'middle' };
+            vC.border = borderAll;
+            vC.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
+        });
+
+        // --- SHEET 2: PARETO ---
+        const ws2 = wb.addWorksheet('Defect Analysis (Pareto)');
+        ws2.columns = [
+            { header: 'Rank', key: 'rk', width: 10 }, { header: 'Defect Name', key: 'dn', width: 30 },
+            { header: 'Total Qty', key: 'tq', width: 15 }, { header: 'Occurrence', key: 'oc', width: 15 },
+            { header: '% Contribution', key: 'pc', width: 18 }, { header: 'Cumulative %', key: 'cp', width: 18 },
+            { header: 'Pareto Class', key: 'cl', width: 20 }
+        ];
+        let sortedDefects = Object.keys(defectMap).map(k => ({n:k, q:defectMap[k].qty, o:defectMap[k].occ})).sort((a,b)=>b.q-a.q);
+        let cumQty = 0;
+        sortedDefects.forEach((d, idx) => {
+            let pct = totDef > 0 ? (d.q / totDef) : 0;
+            cumQty += d.q;
+            let cumPct = totDef > 0 ? (cumQty / totDef) : 0;
+            let pClass = cumPct <= 0.8 ? "A - Vital Few" : (cumPct <= 0.95 ? "B - Useful Many" : "C - Trivial Many");
+            ws2.addRow([idx+1, d.n, d.q, d.o, (pct*100).toFixed(2)+"%", (cumPct*100).toFixed(2)+"%", pClass]);
+        });
+        styleTable(ws2, 1, sortedDefects.length+1, 7);
+        ws2.autoFilter = 'A1:G1';
+
+        // --- SHEET 3: MODEL PERFORMANCE ---
+        const ws3 = wb.addWorksheet('Model Performance');
+        ws3.columns = [
+            { header: 'Rank', width: 10 }, { header: 'Model', width: 25 }, { header: 'Category', width: 15 },
+            { header: 'Input Qty', width: 15 }, { header: 'Defect Qty', width: 15 }, { header: 'Rejection %', width: 15 }, { header: 'Rejection Level', width: 18 }
+        ];
+        let sortedModels = Object.keys(modelMap).map(k => ({n:k, ...modelMap[k]})).sort((a,b)=>b.def-a.def);
+        sortedModels.forEach((m, idx) => {
+            let rate = m.inp > 0 ? (m.def/m.inp*100) : 0;
+            let lvl = rate > 3.0 ? "High" : (rate >= 1.0 ? "Medium" : "Low");
+            let row = ws3.addRow([idx+1, m.n, m.cat, m.inp, m.def, rate.toFixed(2)+"%", lvl]);
+            
+            // Conditional formatting emulation
+            row.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9E1F2' } }; // Light blue input
+            if(rate > 3.0) row.getCell(6).fill = row.getCell(7).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4B084' } }; // Red
+            else if(rate >= 1.0) row.getCell(6).fill = row.getCell(7).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE699' } }; // Yellow
+        });
+        styleTable(ws3, 1, sortedModels.length+1, 7);
+        ws3.autoFilter = 'A1:G1';
+
+        // --- SHEET 4: MODEL X DEFECT MATRIX ---
+        const ws4 = wb.addWorksheet('Model x Defect Matrix');
+        let uDefs = Array.from(uniqueDefectsForMatrix).sort();
+        let matrixHdr = ['Model', 'Category', ...uDefs, 'Row Total'];
+        ws4.addRow(matrixHdr);
+        
+        let mRowIdx = 2;
+        Object.keys(matrixMap).sort().forEach(m => {
+            let rowData = [m, matrixMap[m].cat];
+            let rowTot = 0;
+            uDefs.forEach(dName => { let v = matrixMap[m].defects[dName] || 0; rowData.push(v || "-"); rowTot+=v; });
+            rowData.push(rowTot);
+            let r = ws4.addRow(rowData);
+            // Highlight high counts
+            for(let c=3; c<=uDefs.length+2; c++){
+                if(r.getCell(c).value > 100) r.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD99694' } };
+            }
+            mRowIdx++;
+        });
+        
+        styleTable(ws4, 1, mRowIdx-1, matrixHdr.length);
+        ws4.getColumn(1).width = 20; ws4.getColumn(2).width = 15;
+        for(let i=3; i<=matrixHdr.length; i++) {
+            ws4.getColumn(i).width = 5;
+            let hc = ws4.getCell(1, i);
+            hc.alignment = { textRotation: 90, horizontal: 'center', vertical: 'bottom' }; // Vertical text exactly like screenshot
+        }
+        ws4.getRow(1).height = 100;
+
+        // --- SHEET 5: MODEL-WISE DETAIL REPORT ---
+        const ws5 = wb.addWorksheet('Model-Wise Detail Report');
+        ws5.getColumn(1).width = 20; ws5.getColumn(2).width = 15; ws5.getColumn(3).width = 15;
+        ws5.getColumn(4).width = 25; ws5.getColumn(5).width = 15; ws5.getColumn(6).width = 70;
+
+        ws5.mergeCells('A1:F2');
+        let mwTitle = ws5.getCell('A1');
+        mwTitle.value = `MODEL-WISE DEFECT DETAIL — ROOT CAUSE & CORRECTIVE ACTION (${moName})`;
+        mwTitle.font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+        mwTitle.fill = hdrFill; mwTitle.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws5.addRow([]);
+        let subHdr = ws5.addRow(['MODEL NAME', 'TOTAL INPUT', 'TOTAL MODEL DEFECT %', 'SPECIFIC DEFECT', 'DEFECT QTY', 'ROOT CAUSE / CORRECTIVE ACTION']);
+        subHdr.font = { bold: true, color: { argb: 'FF16365C' } };
+        subHdr.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9E1F2' } };
+        subHdr.alignment = { horizontal: 'center', vertical: 'middle' };
+        for(let c=1; c<=6; c++) subHdr.getCell(c).border = borderAll;
+
+        let startRow = 5;
+        Object.keys(matrixMap).sort().forEach(mod => {
+            let mPerf = modelMap[mod];
+            let mRateStr = mPerf.inp > 0 ? (mPerf.def/mPerf.inp*100).toFixed(2)+"%" : "0%";
+            
+            let aggMDef = {};
+            currMonthData.filter(r => r[2]===mod).forEach(r => {
+                try{ JSON.parse(r[7]).forEach(d => {
                     if(!aggMDef[d.name]) aggMDef[d.name] = {qty:0, ana:[]};
                     aggMDef[d.name].qty += (+d.qty);
                     if(d.analysis) aggMDef[d.name].ana.push(d.analysis);
+                });}catch(e){}
+            });
+
+            let dKeys = Object.keys(aggMDef).sort((a,b)=>aggMDef[b].qty - aggMDef[a].qty);
+            if(dKeys.length > 0) {
+                let initRow = startRow;
+                dKeys.forEach((dk) => {
+                    let rca = [...new Set(aggMDef[dk].ana)].filter(Boolean).join(" | ");
+                    let r = ws5.addRow([mod, mPerf.inp, mRateStr, dk, aggMDef[dk].qty, rca]);
+                    
+                    for(let c=1; c<=6; c++) r.getCell(c).border = borderAll;
+                    r.getCell(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                    r.getCell(1).font = { bold: true, color: { argb: 'FF16365C' } };
+                    r.getCell(2).alignment = { vertical: 'middle', horizontal: 'center' };
+                    r.getCell(3).alignment = { vertical: 'middle', horizontal: 'center' };
+                    r.getCell(3).font = { bold: true, color: { argb: 'FF548235' } };
+                    r.getCell(5).font = { bold: true, color: { argb: 'FFC00000' } }; // Red Qty
+                    r.getCell(5).alignment = { horizontal: 'center' };
+                    r.getCell(6).font = { italic: true, color: { argb: 'FF2F75B5' } }; // Blue Italic Root Cause
+                    r.getCell(6).alignment = { wrapText: true, vertical: 'middle' };
+                    startRow++;
                 });
-
-                let dKeys = Object.keys(aggMDef).sort((a,b)=>aggMDef[b].qty - aggMDef[a].qty);
-                if(dKeys.length === 0) {
-                    detailAoa.push([mod, mPerf.inp, mRateStr, "-", 0, "-"]);
-                } else {
-                    dKeys.forEach((dk, idx) => {
-                        let rca = [...new Set(aggMDef[dk].ana)].filter(Boolean).join(" | ");
-                        // To simulate merged rows in Excel flatly, we only print model name on first row
-                        let dispMod = idx === 0 ? mod : "";
-                        let dispInp = idx === 0 ? mPerf.inp : "";
-                        let dispRate = idx === 0 ? mRateStr : "";
-                        detailAoa.push([dispMod, dispInp, dispRate, dk, aggMDef[dk].qty, rca]);
-                    });
+                
+                // Merge Model Name, Input, and Def % cells vertically
+                if(startRow - 1 > initRow) {
+                    ws5.mergeCells(`A${initRow}:A${startRow-1}`);
+                    ws5.mergeCells(`B${initRow}:B${startRow-1}`);
+                    ws5.mergeCells(`C${initRow}:C${startRow-1}`);
                 }
-            });
-            let ws5 = XLSX.utils.aoa_to_sheet(detailAoa);
-            XLSX.utils.book_append_sheet(wb, ws5, "Model-Wise Detail Report");
+            }
+        });
 
-            // --- SHEET 6: Weekly Trend ---
-            let wkAoa = [['Week', 'Input Qty', 'Defect Qty', 'Rejection %']];
-            Object.keys(weeklyMap).sort().forEach(wk => {
-                let wObj = weeklyMap[wk];
-                let wRate = wObj.inp > 0 ? (wObj.def/wObj.inp*100).toFixed(2)+"%" : "0%";
-                wkAoa.push([wk, wObj.inp, wObj.def, wRate]);
-            });
-            let ws6 = XLSX.utils.aoa_to_sheet(wkAoa);
-            XLSX.utils.book_append_sheet(wb, ws6, "Weekly Trend");
+        // --- SHEET 6: WEEKLY TREND ---
+        const ws6 = wb.addWorksheet('Weekly Trend');
+        ws6.columns = [{header:'Week', width:12}, {header:'Date Range', width:20}, {header:'Input Qty', width:15}, {header:'Defect Qty', width:15}, {header:'Rejection %', width:15}];
+        Object.keys(weeklyMap).sort().forEach(wk => {
+            let wObj = weeklyMap[wk];
+            let wRate = wObj.inp > 0 ? (wObj.def/wObj.inp*100).toFixed(2)+"%" : "0%";
+            let dateRng = `${String(wObj.startDay).padStart(2,'0')}-${shortMo} to ${String(wObj.endDay).padStart(2,'0')}-${shortMo}`;
+            ws6.addRow([wk, dateRng, wObj.inp, wObj.def, wRate]);
+        });
+        styleTable(ws6, 1, Object.keys(weeklyMap).length+1, 5);
 
-            // --- SHEET 7: Raw Data Daily ---
-            let ws7 = XLSX.utils.aoa_to_sheet(rawDailyAoa);
-            XLSX.utils.book_append_sheet(wb, ws7, "Raw Data - Daily");
+        // --- SHEET 7: RAW DATA DAILY ---
+        const ws7 = wb.addWorksheet('Raw Data - Daily');
+        ws7.addRow(['Date', 'Category', 'Model', 'Line', 'Shift', 'Prepared By', 'Input Qty', 'Total Defect Qty', 'Rejection %']);
+        rawDaily.forEach(r => ws7.addRow(r));
+        styleTable(ws7, 1, rawDaily.length+1, 9);
+        ws7.autoFilter = 'A1:I1';
 
-            // --- SHEET 8: Raw Data Defect Detail ---
-            let ws8 = XLSX.utils.aoa_to_sheet(rawDefectAoa);
-            XLSX.utils.book_append_sheet(wb, ws8, "Raw Data - Defect Detail");
+        // --- SHEET 8: RAW DATA DEFECT DETAIL ---
+        const ws8 = wb.addWorksheet('Raw Data - Defect Detail');
+        ws8.addRow(['Date', 'Category', 'Model', 'Line', 'Shift', 'Defect Name', 'Original Defect Name', 'Defect Qty', 'Analysis / Root Cause']);
+        rawDefect.forEach(r => ws8.addRow(r));
+        styleTable(ws8, 1, rawDefect.length+1, 9);
+        ws8.autoFilter = 'A1:I1';
 
-            // DOWNLOAD
-            XLSX.writeFile(wb, `SMT_Quality_Report_${dashDateStr}.xlsx`);
-            
-        } catch(e) {
-            console.error(e);
-            alert("Error generating Master Excel. See console.");
-        } finally {
-            document.getElementById('loader').style.display = 'none';
-        }
-    }, 500);
+        // Trigger Download
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `SMT_Monthly_Report_${shortMo.split(' ')[1]}.xlsx`; // Matches screenshot naming convention
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+    } catch(e) {
+        console.error(e);
+        alert("Error generating formatted Excel. Please check console.");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+    }
 }
 </script>
 </body>
