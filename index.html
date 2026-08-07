@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SMT Rejection Outlook- Califonix</title>
 <!-- Google Fonts: Inter for UI, Roboto Mono for numbers -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
 <!-- Libraries -->
 <script src="https://www.gstatic.com/charts/loader.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<!-- NEW: Added SheetJS for Multi-Sheet Excel Export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -82,14 +84,6 @@
   .bg-warning { background: rgba(255, 159, 67, 0.15); color: #FF9F43; }
   .bg-danger { background: rgba(234, 84, 85, 0.15); color: #EA5455; }
 
-  /* --- NEW CUSTOM MATRIX TABLE (Like the Image Provided) --- */
-  .custom-matrix { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; border: 1px solid #E2E8F0; background: white; }
-  .custom-matrix th { background: #F8FAFC; color: #002B5B; font-weight: 800; text-transform: uppercase; padding: 15px; text-align: left; border: 1px solid #E2E8F0; font-size: 12px; letter-spacing: 0.5px; }
-  .custom-matrix td { padding: 15px; border: 1px solid #E2E8F0; vertical-align: middle; }
-  .custom-matrix .rca-cell { background: #FCF9E3; color: #555; font-size: 13px; outline: none; }
-  .custom-matrix .rca-cell:focus { background: #fff; border-bottom: 2px solid var(--primary); }
-  .custom-matrix .def-qty { color: #D72323; font-weight: 800; font-family: 'Roboto Mono', monospace; font-size:15px; }
-  
   /* --- FORMS & INPUTS --- */
   .control-panel { background: white; padding: 20px; border-radius: var(--border-radius); box-shadow: var(--shadow-card); margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
   .form-group { flex: 1; min-width: 150px; }
@@ -128,7 +122,7 @@
   .report-header { border-bottom: 3px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; }
   .report-title h1 { margin: 0; color: var(--primary); font-size: 28px; text-transform: uppercase; letter-spacing: 1px; }
   .report-title p { margin: 5px 0 0; color: var(--text-muted); }
-  .report-section-title { font-size: 16px; font-weight: 800; color: var(--primary); border-left: 5px solid var(--accent); padding-left: 10px; margin: 30px 0 15px 0; background: #f4f5fa; padding: 10px; text-transform:uppercase; }
+  .report-section-title { font-size: 16px; font-weight: 800; color: var(--primary); border-left: 5px solid var(--accent); padding-left: 10px; margin: 30px 0 15px 0; background: #f4f5fa; padding: 10px; }
   .analysis-card { background: #fffde7; border-left: 4px solid #fbc02d; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
   
   /* --- MULTI SELECT --- */
@@ -140,6 +134,17 @@
   #checkboxes label:hover { background: #f0f0f0; }
 
   @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* --- MATRIX EXCEL STYLE CSS (from previous addition) --- */
+  .matrix-table { width: 100%; border-collapse: collapse; font-size: 12px; background: white; border: 1px solid #000; }
+  .matrix-table th { border: 1px solid #000; padding: 10px; text-align: center; color: black; font-weight: bold; }
+  .matrix-table td { border: 1px solid #000; padding: 10px; text-align: center; vertical-align: top; }
+  .matrix-header-main { background-color: #B4C6E7 !important; font-size: 16px; font-weight: bold; }
+  .matrix-header-sub { background-color: #FFF2CC !important; }
+  .matrix-green { background-color: #C6E0B4 !important; color: #000; font-weight: bold; }
+  .matrix-red { background-color: #F8CBAD !important; color: #C00000; font-weight: bold; }
+  .matrix-model { color: #0563C1; text-decoration: underline; text-align: left !important; font-weight: bold; }
+  .matrix-text { text-align: left !important; font-size: 11px; line-height: 1.4; }
   
   /* Print Media Query */
   @media print {
@@ -180,6 +185,7 @@
             <button class="nav-btn" onclick="showPage('model_report', this)"><i class="fas fa-headphones"></i> Model Report</button>
             <button class="nav-btn" onclick="showPage('defect_report', this)"><i class="fas fa-bug"></i> Defect Analysis</button>
             <button class="nav-btn" onclick="showPage('month_report', this)"><i class="fas fa-calendar-alt"></i> Monthly Overview</button>
+            <button class="nav-btn" onclick="showPage('matrix_report', this)"><i class="fas fa-table"></i> Executive Matrix</button>
         </div>
     </nav>
 
@@ -286,7 +292,7 @@
             </div>
         </div>
 
-        <!-- MODEL REPORT (UPDATED TO CUSTOM MATRIX TABLE) -->
+        <!-- MODEL REPORT -->
         <div id="model_report" style="display:none;">
             <div class="control-panel no-print">
                 <div class="form-group"><label>From</label><input type="date" id="m_date_start" class="form-control"></div>
@@ -300,7 +306,7 @@
                 </div>
                 <button class="btn btn-primary" onclick="genModelReport()">View</button>
                 <button class="btn btn-success" onclick="downloadPDF('model_print_area', 'Model_Report.pdf')">PDF</button>
-                <button class="btn btn-info" onclick="downloadExcel('m_tabular_analysis', 'Model_Analysis_Report.xls')">Export Excel Table</button>
+                <button class="btn btn-info" onclick="downloadExcel('excel_table', 'Model_Report.xls')">Excel</button>
             </div>
             <div id="model_print_area" class="report-sheet">
                 <div class="report-header"><div class="report-title"><h1>Specific Model Report</h1><p>Period: <span id="m_subtitle">--</span></p></div><img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;"></div>
@@ -312,22 +318,10 @@
                 </div>
                 <div id="m_trend_chart" style="width:100%; height:500px; margin-bottom:20px;"></div>
                 <div id="m_pareto_chart" style="width:100%; height:500px; margin-bottom:20px;"></div>
-                
-                <div class="report-section-title">Model-Wise Analysis Data Matrix</div>
-                <table class="custom-matrix" id="m_tabular_analysis">
-                    <thead>
-                        <tr>
-                            <th>Model Name</th>
-                            <th>Total Input</th>
-                            <th>Total Model Def %</th>
-                            <th>Specific Defect</th>
-                            <th>Defect Qty</th>
-                            <th>Root Cause / Corrective Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="m_tabular_body"></tbody>
-                </table>
+                <div class="report-section-title">Analysis (Editable)</div><div id="m_analysis_list"></div>
+                <table class="styled-table"><tbody id="m_remaining_list"></tbody></table>
             </div>
+            <table id="excel_table" style="display:none;"><thead><tr><th>Date</th><th>Shift</th><th>Line</th><th>Model</th><th>Input</th><th>Defect Name</th><th>Qty</th><th>Ref ID</th><th>Analysis</th></tr></thead><tbody id="excel_body"></tbody></table>
         </div>
 
         <!-- DEFECT REPORT -->
@@ -342,16 +336,13 @@
             </div>
             <div id="defect_print_area" class="report-sheet">
                 <div class="report-header"><div class="report-title"><h1>Defect Deep Dive</h1><p>Period: <span id="d_subtitle">--</span></p></div><img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;"></div>
-                
                 <div class="ticket-summary">
                     <div class="ts-box" style="background:#333;"><span class="ts-lbl">Defect Name</span><span class="ts-val" style="font-size:18px;" id="d_name_disp">--</span></div>
                     <div class="ts-box"><span class="ts-lbl">Total Production</span><span class="ts-val" id="d_total_prod">0</span></div>
                     <div class="ts-box alert"><span class="ts-lbl">Defect Rate</span><span class="ts-val" id="d_rate_val">0%</span></div>
                     <div class="ts-box" style="background:var(--warning);"><span class="ts-lbl">Contribution Rate</span><span class="ts-val" id="d_contrib_val">0%</span></div>
                 </div>
-                
                 <div id="d_contrib_chart" style="width:100%; height:500px;"></div>
-                
                 <div class="report-section-title">Model Wise Data (Sorted High to Low)</div>
                 <table class="styled-table">
                     <thead><tr><th>Model Name</th><th>Input</th><th>Defect Qty</th><th>Defect Rate</th><th>Analysis (Editable)</th></tr></thead>
@@ -361,26 +352,25 @@
             <table id="defect_excel_table" style="display:none;"><tbody id="defect_excel_body"></tbody></table>
         </div>
 
-        <!-- MONTHLY REPORT (UPDATED TO CUSTOM MATRIX TABLE) -->
+        <!-- MONTHLY REPORT (WITH THE NEW EXCEL BUTTON) -->
         <div id="month_report" style="display:none;">
             <div class="control-panel no-print">
                 <div class="form-group"><label>Select Month</label><input type="month" id="mo_picker" class="form-control"></div>
                 <button class="btn btn-primary" onclick="genMonthReport()">Load Data</button>
                 <button class="btn btn-success" onclick="downloadPDF('month_print_area', 'Monthly_Report.pdf')">PDF</button>
-                <button class="btn btn-info" onclick="downloadExcel('mo_tabular_analysis', 'Monthly_Analysis_Report.xls')">Export Excel Table</button>
-                <button class="btn btn-warning" style="background:#F5A302;color:white;" onclick="downloadProfessionalPPT('Month')">PPT</button>
+                <button class="btn btn-warning" style="background:#F5A302;color:white;" onclick="downloadProfessionalPPT('Month')">Professional PPT</button>
+                <!-- EXACT REQUIREMENT ADDED HERE -->
+                <button class="btn btn-info" style="background:#1D6F42;" onclick="generateMasterExcel()"><i class="fas fa-file-excel"></i> Export Master Excel</button>
             </div>
             <div id="month_print_area" class="report-sheet">
                 <div class="report-header"><div class="report-title"><h1>Monthly Performance Review</h1><p id="mo_subtitle">--</p></div><img src="https://i.postimg.cc/5y7SN4xc/logo.png" style="height:50px;"></div>
                 
-                <!-- 1. Key Metrics -->
                 <div class="ticket-summary">
                     <div class="ts-box"><span class="ts-lbl">Total Production (Input)</span><span class="ts-val" id="mo_inp">0</span></div>
                     <div class="ts-box alert"><span class="ts-lbl">Total Defects</span><span class="ts-val" id="mo_def">0</span></div>
                     <div class="ts-box" style="background:var(--warning);"><span class="ts-lbl">Rejection Rate</span><span class="ts-val" id="mo_rate">0%</span></div>
                 </div>
 
-                <!-- 2. Pareto Analysis (Two Charts) -->
                 <div class="report-section-title">Pareto Analysis (Defect Wise)</div>
                 <div style="display:flex; gap:20px; margin-bottom:20px;">
                     <div class="chart-box" style="flex:1; padding:10px; min-height:450px;">
@@ -391,28 +381,40 @@
                     </div>
                 </div>
 
-                <!-- 3. Model Rejection Rate Graph -->
                 <div class="report-section-title">Model Wise Rejection Rate</div>
                 <div class="chart-box" style="width:100%; padding:10px; min-height:500px; margin-bottom:20px;">
                     <div id="mo_model_rate_chart" style="width:100%; height:480px;"></div>
                 </div>
 
-                <!-- 4. Matrix Table (Rowspan logic) -->
-                <div class="report-section-title">Month-Wise Performance & Root Cause Matrix</div>
-                <table class="custom-matrix" id="mo_tabular_analysis">
-                    <thead>
-                        <tr>
-                            <th>Model Name</th>
-                            <th>Total Input</th>
-                            <th>Total Model Def %</th>
-                            <th>Specific Defect</th>
-                            <th>Defect Qty</th>
-                            <th>Root Cause / Corrective Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mo_tabular_body"></tbody>
+                <div class="report-section-title">Model Performance Data (Click Model to View History)</div>
+                <table class="styled-table">
+                    <thead><tr><th>Model Name</th><th>Total Input</th><th>Total Defects</th><th>Rejection Rate %</th></tr></thead>
+                    <tbody id="mo_model_table_body"></tbody>
                 </table>
 
+                <div class="report-section-title">Detailed Defect Analysis (Model Wise)</div>
+                <div id="mo_detailed_analysis"></div>
+            </div>
+        </div>
+
+        <!-- EXECUTIVE MATRIX REPORT -->
+        <div id="matrix_report" style="display:none;">
+            <div class="control-panel no-print">
+                <div class="form-group">
+                    <label>Target Base Month (Generates 3-Month Trend)</label>
+                    <input type="month" id="matrix_month" class="form-control">
+                </div>
+                <button class="btn btn-primary" onclick="genMatrixReport()">Generate Matrix</button>
+                <button class="btn btn-info" onclick="exportCustomExcel('matrix_table_display', 'SMT_Matrix_Report.xls')">Export Excel format</button>
+            </div>
+
+            <div class="table-responsive" style="padding: 20px; background: white;">
+                <h3 style="margin-top:0; color:var(--primary);">SMT Model Wise Summary</h3>
+                <p style="color:#666; font-size:13px; margin-bottom:20px;">Displays latest 3 months rejection trend and root cause analysis for the Top 3 defects of the target month.</p>
+                
+                <div id="matrix_container" style="overflow-x:auto;">
+                    <!-- Table injects here -->
+                </div>
             </div>
         </div>
 
@@ -452,10 +454,14 @@ function normalizeDate(dateStr) {
 }
 
 window.onload = () => {
-    const today = new Date().toLocaleDateString('en-CA');
-    document.getElementById('e_date').value = today;
-    document.getElementById('dash_from').value = today;
-    document.getElementById('mo_picker').value = today.substring(0, 7);
+    const today = new Date();
+    const currMonth = today.toISOString().substring(0, 7);
+    const dateStr = today.toLocaleDateString('en-CA');
+    
+    document.getElementById('e_date').value = dateStr;
+    document.getElementById('dash_from').value = dateStr;
+    document.getElementById('mo_picker').value = currMonth;
+    document.getElementById('matrix_month').value = currMonth;
     loadAllData();
 };
 
@@ -465,7 +471,10 @@ function switchCategory(cat) {
     document.getElementById('btn_case').className = cat === 'ChargingCase' ? 'cat-opt active' : 'cat-opt';
     currentData = (cat === 'Earbuds') ? rawData.earbuds : rawData.charging_case;
     updateDropdowns();
-    renderDash();
+    
+    let activePage = document.querySelector('.nav-btn.active').innerText.trim();
+    if(activePage === "Dashboard") renderDash();
+    else if(activePage === "Executive Matrix") genMatrixReport();
 }
 
 function updateDropdowns(){
@@ -481,13 +490,15 @@ let expanded = false;
 function showCheckboxes() { let c = document.getElementById("checkboxes"); c.style.display = expanded ? "none" : "block"; expanded = !expanded; }
 
 function showPage(id, btn){ 
-    document.querySelectorAll('#dashboard, #entry, #report, #model_report, #defect_report, #month_report').forEach(d => d.style.display='none'); 
+    document.querySelectorAll('#dashboard, #entry, #report, #model_report, #defect_report, #month_report, #matrix_report').forEach(d => d.style.display='none'); 
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     if(btn) btn.classList.add('active');
     document.getElementById(id).style.display='block';
     
-    let titles = {dashboard:"Dashboard Overview", entry:"Data Entry Portal", report:"Comprehensive Analysis", model_report:"Model Specific Report", defect_report:"Defect Deep Dive", month_report:"Monthly Summary"};
+    let titles = {dashboard:"Dashboard Overview", entry:"Data Entry Portal", report:"Comprehensive Analysis", model_report:"Model Specific Report", defect_report:"Defect Deep Dive", month_report:"Monthly Summary", matrix_report:"Executive Matrix"};
     document.getElementById('page_header').innerText = titles[id];
+    
+    if(id === 'matrix_report' && currentData.length > 0) genMatrixReport();
 }
 
 function formatPct(val) { let s = String(val); if(s.includes("%")) return s; let n = parseFloat(s); return isNaN(n) ? "0.00%" : (n * 100).toFixed(2) + "%"; }
@@ -517,9 +528,6 @@ function calcTotal(){
     document.querySelectorAll('.defect-row').forEach(row => { let q = +row.querySelector('.d-qty').value || 0; row.querySelector('.d-rate').value = (inp>0 && q>0) ? (q/inp*100).toFixed(2)+"%" : "0%"; });
 }
 
-/* -------------------------------------------------------------------------
-   PREVIEW MODAL (TICKET STYLE)
-------------------------------------------------------------------------- */
 function previewEntry() { renderPreviewModal(getEntryData()); }
 function getEntryData() {
     let d = {
@@ -607,7 +615,6 @@ function renderDash(){
   let stats = { all_i:0, all_d:0, f1_i:0, f1_d:0, f2_i:0, f2_d:0, fb_i:0, fb_d:0 };
   let mMode = {}, mDef = {};
 
-  // Clean Chart Options
   const chartOpts = { 
       backgroundColor: 'transparent', 
       chartArea: { width: '90%', height: '80%' }, 
@@ -663,7 +670,7 @@ function editRow(idx){
 }
 
 /* -------------------------------------------------------------------------
-   REPORT GENERATION LOGIC (Overall)
+   REPORT GENERATION LOGIC
 ------------------------------------------------------------------------- */
 function processReportData(rData, inpId, defId, rateId, trendId, paretoId, anaId, remId, modelChartId){
   let totInp=0, totDef=0, dateMap = {}, modelMap = {}, defectsMap = {};
@@ -711,86 +718,103 @@ function genReport(){
   processReportData(rData, 'r_inp', 'r_def', 'r_rate_val', 'trend_chart_div', 'pareto_chart_div', 'analysis_list', 'remaining_list', 'model_chart_div');
 }
 
-/* -------------------------------------------------------------------------
-   NEW TABULAR MATRIX BUILDER (USED BY MODEL & MONTH REPORT)
-------------------------------------------------------------------------- */
-function buildMatrixTable(rData, tbodyId) {
-    let modelDefects = {};
-    
-    // Group all data by Model -> Defects
-    rData.forEach(r => {
-        let mod = r[2], inp = +r[3], def = +r[4];
-        if(!modelDefects[mod]) modelDefects[mod] = { input: 0, totalDef: 0, defects: {} };
-        modelDefects[mod].input += inp;
-        modelDefects[mod].totalDef += def;
-        try {
-            JSON.parse(r[7]).forEach(d => {
-                if(!modelDefects[mod].defects[d.name]) modelDefects[mod].defects[d.name] = {qty:0, ana:[]};
-                modelDefects[mod].defects[d.name].qty += (+d.qty);
-                if(d.analysis) modelDefects[mod].defects[d.name].ana.push(d.analysis);
-            });
-        } catch(e) {}
-    });
-
-    let html = "";
-    Object.keys(modelDefects).sort().forEach(mod => {
-        let mObj = modelDefects[mod];
-        let defKeys = Object.keys(mObj.defects).sort((a,b) => mObj.defects[b].qty - mObj.defects[a].qty);
-        let rowCount = defKeys.length;
-        
-        let overallModelRate = mObj.input > 0 ? (mObj.totalDef / mObj.input * 100).toFixed(2) + "%" : "0.00%";
-        // Green if < 3%, Red if >= 3% (Adjust threshold as needed)
-        let rateColor = (mObj.input > 0 && (mObj.totalDef / mObj.input * 100) >= 3.0) ? "color:#EA5455;" : "color:#28C76F;";
-
-        if(rowCount === 0) {
-            html += `<tr>
-                <td style="background:#fff;"><strong>${mod}</strong></td>
-                <td style="background:#fff;">${mObj.input}</td>
-                <td style="background:#fff; font-weight:800; ${rateColor}">${overallModelRate}</td>
-                <td colspan="3" style="text-align:center; color:#999;">No defects recorded</td>
-            </tr>`;
-        } else {
-            defKeys.forEach((dName, idx) => {
-                let dObj = mObj.defects[dName];
-                let rcaStr = [...new Set(dObj.ana)].filter(Boolean).join(" | ") || "Click to add analysis...";
-
-                if(idx === 0) {
-                    html += `<tr>
-                        <td rowspan="${rowCount}" style="background:#fff;"><strong>${mod}</strong></td>
-                        <td rowspan="${rowCount}" style="background:#fff;">${mObj.input}</td>
-                        <td rowspan="${rowCount}" style="background:#fff; font-weight:800; ${rateColor}">${overallModelRate}</td>
-                        <td><span style="font-weight:600; color:#333;">${dName}</span></td>
-                        <td class="def-qty">${dObj.qty}</td>
-                        <td class="rca-cell" contenteditable="true">${rcaStr}</td>
-                    </tr>`;
-                } else {
-                    html += `<tr>
-                        <td><span style="font-weight:600; color:#333;">${dName}</span></td>
-                        <td class="def-qty">${dObj.qty}</td>
-                        <td class="rca-cell" contenteditable="true">${rcaStr}</td>
-                    </tr>`;
-                }
-            });
-        }
-    });
-
-    document.getElementById(tbodyId).innerHTML = html;
-}
-
 function genModelReport(){
     let s = document.getElementById('m_date_start').value, e = document.getElementById('m_date_end').value;
     let selectedModels = []; document.querySelectorAll('#checkboxes input:checked').forEach(c => selectedModels.push(c.value));
     if(selectedModels.length === 0) return alert("Select at least one model");
     document.getElementById('m_name_disp').innerText = selectedModels.join(", "); document.getElementById('m_subtitle').innerText = `${s} to ${e}`;
-    
     let rData = currentData.filter(r => { let d = normalizeDate(r[0]); return d >= s && d <= e && selectedModels.includes(r[2]); });
     document.getElementById('model_print_area').style.display = 'block';
+    processReportData(rData, 'm_inp', 'm_def', 'm_rate_val', 'm_trend_chart', 'm_pareto_chart', 'm_analysis_list', 'm_remaining_list');
+    let xlsHtml = ""; rData.forEach(r => { let dStr = normalizeDate(r[0]); try { JSON.parse(r[7]).forEach(d => { xlsHtml += `<tr><td>${dStr}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.ref||''}</td><td>${d.analysis||''}</td></tr>`; }); } catch(e){} }); document.getElementById('excel_body').innerHTML = xlsHtml;
+}
+
+function genDefectWiseReport(){
+    let s = document.getElementById('d_date_start').value, e = document.getElementById('d_date_end').value;
+    let defName = document.getElementById('d_defect_select').value;
     
-    // Use generic function for KPIs/Charts, pass null to bypass old lists
-    processReportData(rData, 'm_inp', 'm_def', 'm_rate_val', 'm_trend_chart', 'm_pareto_chart', null, null, null);
+    document.getElementById('d_name_disp').innerText = defName; 
+    document.getElementById('d_subtitle').innerText = `${s} to ${e}`;
     
-    // Inject custom Matrix Table
-    buildMatrixTable(rData, 'm_tabular_body');
+    let rData = currentData.filter(r => { let d = normalizeDate(r[0]); return d >= s && d <= e; });
+
+    let totalProdInput = 0; 
+    let totalAllDefects = 0;
+    let specificDefectQty = 0;
+    let modelStats = {}; 
+
+    let xlsHtml = "";
+
+    rData.forEach(r => {
+        let inp = +r[3];
+        let totDef = +r[4];
+        let mod = r[2];
+        
+        totalProdInput += inp;
+        totalAllDefects += totDef;
+
+        try { 
+            let dList = JSON.parse(r[7]); 
+            dList.forEach(d => {
+                if(d.name === defName) {
+                    let q = +d.qty;
+                    specificDefectQty += q;
+                    if(!modelStats[mod]) modelStats[mod] = {qty:0, analysis:[]};
+                    modelStats[mod].qty += q;
+                    if(d.analysis) modelStats[mod].analysis.push(d.analysis);
+                    xlsHtml += `<tr><td>${normalizeDate(r[0])}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.analysis||''}</td></tr>`;
+                }
+            });
+        } catch(e){}
+    });
+
+    let finalModelStats = {};
+    rData.forEach(r => {
+        let mod = r[2];
+        let inp = +r[3];
+        if(!finalModelStats[mod]) finalModelStats[mod] = {input:0, qty:0, analysis:[]};
+        finalModelStats[mod].input += inp;
+        if(modelStats[mod]) {
+            finalModelStats[mod].qty = modelStats[mod].qty;
+            finalModelStats[mod].analysis = modelStats[mod].analysis;
+        }
+    });
+
+    let defectRate = totalProdInput > 0 ? (specificDefectQty / totalProdInput * 100) : 0;
+    let contribRate = totalAllDefects > 0 ? (specificDefectQty / totalAllDefects * 100) : 0;
+
+    document.getElementById('d_total_prod').innerText = totalProdInput;
+    document.getElementById('d_rate_val').innerText = defectRate.toFixed(2) + "%";
+    document.getElementById('d_contrib_val').innerText = contribRate.toFixed(2) + "%";
+
+    let sortedModels = Object.keys(finalModelStats)
+        .filter(m => finalModelStats[m].qty > 0)
+        .map(m => ({name: m, ...finalModelStats[m]}))
+        .sort((a,b) => b.qty - a.qty);
+
+    let tblHtml = "";
+    let chartData = [['Model', 'Defect Qty', {role:'annotation'}]];
+
+    sortedModels.forEach(m => {
+        let mRate = m.input > 0 ? (m.qty / m.input * 100).toFixed(2) : "0.00";
+        let uniqueAna = [...new Set(m.analysis)].join(" | ");
+        tblHtml += `<tr>
+            <td><strong>${m.name}</strong></td>
+            <td>${m.input}</td>
+            <td><b>${m.qty}</b></td>
+            <td>${mRate}%</td>
+            <td contenteditable="true" style="color:#555; border-left:1px dashed #ccc;">${uniqueAna || 'Add Analysis...'}</td>
+        </tr>`;
+        chartData.push([m.name, m.qty, String(m.qty)]);
+    });
+
+    document.getElementById('defect_detail_body').innerHTML = tblHtml;
+    document.getElementById('defect_excel_body').innerHTML = xlsHtml;
+    document.getElementById('defect_print_area').style.display='block';
+
+    let cOpts = { backgroundColor:'transparent', legend:'none', title:'Defect Count by Model', colors:['#EA5455'], chartArea:{width:'90%', height:'80%'} };
+    chartInstances['Defect'] = new google.visualization.ColumnChart(document.getElementById('d_contrib_chart'));
+    chartInstances['Defect'].draw(google.visualization.arrayToDataTable(chartData), cOpts);
 }
 
 function genMonthReport() {
@@ -806,133 +830,126 @@ function genMonthReport() {
     let modelMap = {};  
     
     rData.forEach(r => {
-        let inp = +r[3], def = +r[4], modName = r[2];
-        totInp += inp; totDef += def;
-        
-        if(!modelMap[modName]) modelMap[modName] = {inp:0, def:0};
-        modelMap[modName].inp += inp; modelMap[modName].def += def;
+        let inp = +r[3];
+        let def = +r[4];
+        let modName = r[2];
+
+        totInp += inp;
+        totDef += def;
+
+        if(!modelMap[modName]) modelMap[modName] = {inp:0, def:0, defects:{}};
+        modelMap[modName].inp += inp;
+        modelMap[modName].def += def;
 
         try {
-            JSON.parse(r[7]).forEach(d => {
-                if(!defectMap[d.name]) defectMap[d.name] = 0;
-                defectMap[d.name] += (+d.qty);
+            let dList = JSON.parse(r[7]);
+            dList.forEach(d => {
+                let dName = d.name;
+                let dQty = +d.qty;
+                if(!defectMap[dName]) defectMap[dName] = 0;
+                defectMap[dName] += dQty;
+                if(!modelMap[modName].defects[dName]) modelMap[modName].defects[dName] = {qty:0, ana:[]};
+                modelMap[modName].defects[dName].qty += dQty;
+                if(d.analysis) modelMap[modName].defects[dName].ana.push(d.analysis);
             });
         } catch(e) {}
     });
 
     document.getElementById('mo_inp').innerText = totInp;
     document.getElementById('mo_def').innerText = totDef;
-    document.getElementById('mo_rate').innerText = (totInp > 0 ? (totDef/totInp*100).toFixed(2) : "0.00") + "%";
+    let overallRate = totInp > 0 ? (totDef/totInp*100).toFixed(2) : "0.00";
+    document.getElementById('mo_rate').innerText = overallRate + "%";
 
-    const chartOpts = { backgroundColor:'transparent', legend:{position:'none'}, chartArea:{width:'90%', height:'85%'} };
+    const chartOpts = { 
+        backgroundColor:'transparent', 
+        legend:{position:'none'}, 
+        chartArea:{width:'90%', height:'85%'}, 
+        annotations: { alwaysOutside: true, textStyle: { fontSize: 10, color: '#000', bold:true } },
+        hAxis: { textStyle: {fontSize: 9, color: '#555'} },
+        vAxis: { textStyle: {fontSize: 10, color: '#555'}, gridlines:{count:5, color:'#eee'} }
+    };
 
-    let sortedDefects = Object.keys(defectMap).map(k => ({name:k, qty:defectMap[k]})).sort((a,b) => b.qty - a.qty).slice(0, 10);
+    let sortedDefects = Object.keys(defectMap).map(k => ({name:k, qty:defectMap[k]})).sort((a,b) => b.qty - a.qty);
+    let topDefects = sortedDefects.slice(0, 10);
+
     let pQtyData = [['Defect', 'Qty', {role:'annotation'}]];
-    sortedDefects.forEach(d => pQtyData.push([d.name, d.qty, String(d.qty)]));
-    new google.visualization.ColumnChart(document.getElementById('mo_pareto_qty')).draw(google.visualization.arrayToDataTable(pQtyData), {...chartOpts, colors:['#EA5455'], title:'Top Defects by Quantity'});
+    topDefects.forEach(d => pQtyData.push([d.name, d.qty, String(d.qty)]));
+    new google.visualization.ColumnChart(document.getElementById('mo_pareto_qty')).draw(
+        google.visualization.arrayToDataTable(pQtyData), {...chartOpts, colors:['#EA5455'], title:'Top Defects by Quantity', vAxis:{title:'Quantity'}}
+    );
 
     let pRateData = [['Defect', 'Rejection %', {role:'annotation'}]];
-    sortedDefects.forEach(d => { let rate = totInp > 0 ? (d.qty / totInp * 100).toFixed(2) : 0; pRateData.push([d.name, parseFloat(rate), rate + '%']); });
-    new google.visualization.ColumnChart(document.getElementById('mo_pareto_rate')).draw(google.visualization.arrayToDataTable(pRateData), {...chartOpts, colors:['#FF9F43'], title:'Top Defects by Rate (%)'});
+    topDefects.forEach(d => {
+        let rate = totInp > 0 ? (d.qty / totInp * 100).toFixed(2) : 0;
+        pRateData.push([d.name, parseFloat(rate), rate + '%']);
+    });
+    new google.visualization.ColumnChart(document.getElementById('mo_pareto_rate')).draw(
+        google.visualization.arrayToDataTable(pRateData), {...chartOpts, colors:['#FF9F43'], title:'Top Defects by Rate (%)', vAxis:{title:'Rejection %'}}
+    );
+
+    let sortedModels = Object.keys(modelMap).map(k => {
+        let m = modelMap[k];
+        let r = m.inp > 0 ? (m.def / m.inp * 100) : 0;
+        return { name: k, inp: m.inp, def: m.def, rate: r, defects: m.defects };
+    }).sort((a,b) => b.rate - a.rate);
 
     let mGraphData = [['Model', 'Rej Rate %', {role:'annotation'}]];
-    Object.keys(modelMap).map(k => { let m = modelMap[k]; return { name: k, rate: m.inp > 0 ? (m.def / m.inp * 100) : 0 }; }).sort((a,b) => b.rate - a.rate).slice(0, 15).forEach(m => mGraphData.push([m.name, parseFloat(m.rate.toFixed(2)), m.rate.toFixed(2)+'%']));
-    new google.visualization.ColumnChart(document.getElementById('mo_model_rate_chart')).draw(google.visualization.arrayToDataTable(mGraphData), {...chartOpts, colors:['#002B5B'], title:'Model Wise Rejection Rate (%)'});
-
-    // Inject custom Matrix Table
-    buildMatrixTable(rData, 'mo_tabular_body');
-}
-
-// ------------------------------------------------
-// DEFECT REPORT (MODIFIED AS PER REQUEST)
-// ------------------------------------------------
-function genDefectWiseReport(){
-    let s = document.getElementById('d_date_start').value, e = document.getElementById('d_date_end').value;
-    let defName = document.getElementById('d_defect_select').value;
-    
-    document.getElementById('d_name_disp').innerText = defName; 
-    document.getElementById('d_subtitle').innerText = `${s} to ${e}`;
-    
-    let rData = currentData.filter(r => { let d = normalizeDate(r[0]); return d >= s && d <= e; });
-
-    let totalProdInput = 0, totalAllDefects = 0, specificDefectQty = 0;
-    let modelStats = {}, finalModelStats = {}, xlsHtml = "";
-
-    rData.forEach(r => {
-        let inp = +r[3], totDef = +r[4], mod = r[2];
-        totalProdInput += inp; totalAllDefects += totDef;
-
-        try { 
-            JSON.parse(r[7]).forEach(d => {
-                if(d.name === defName) {
-                    let q = +d.qty; specificDefectQty += q;
-                    if(!modelStats[mod]) modelStats[mod] = {qty:0, analysis:[]};
-                    modelStats[mod].qty += q;
-                    if(d.analysis) modelStats[mod].analysis.push(d.analysis);
-                    xlsHtml += `<tr><td>${normalizeDate(r[0])}</td><td>${r[8]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${d.name}</td><td>${d.qty}</td><td>${d.analysis||''}</td></tr>`;
-                }
-            });
-        } catch(e){}
+    sortedModels.slice(0, 15).forEach(m => {
+        mGraphData.push([m.name, parseFloat(m.rate.toFixed(2)), m.rate.toFixed(2)+'%']);
     });
+    new google.visualization.ColumnChart(document.getElementById('mo_model_rate_chart')).draw(
+        google.visualization.arrayToDataTable(mGraphData),
+        {...chartOpts, colors:['#002B5B'], title:'Model Wise Rejection Rate (%)', hAxis:{slantedText:true, textStyle:{fontSize:9}}}
+    );
 
-    rData.forEach(r => {
-        let mod = r[2], inp = +r[3];
-        if(!finalModelStats[mod]) finalModelStats[mod] = {input:0, qty:0, analysis:[]};
-        finalModelStats[mod].input += inp;
-        if(modelStats[mod]) { finalModelStats[mod].qty = modelStats[mod].qty; finalModelStats[mod].analysis = modelStats[mod].analysis; }
-    });
-
-    document.getElementById('d_total_prod').innerText = totalProdInput;
-    document.getElementById('d_rate_val').innerText = (totalProdInput > 0 ? (specificDefectQty / totalProdInput * 100) : 0).toFixed(2) + "%";
-    document.getElementById('d_contrib_val').innerText = (totalAllDefects > 0 ? (specificDefectQty / totalAllDefects * 100) : 0).toFixed(2) + "%";
-
-    let sortedModels = Object.keys(finalModelStats).filter(m => finalModelStats[m].qty > 0).map(m => ({name: m, ...finalModelStats[m]})).sort((a,b) => b.qty - a.qty);
-    let tblHtml = "", chartData = [['Model', 'Defect Qty', {role:'annotation'}]];
+    let tblHtml = "";
+    let dStart = mo + "-01";
+    let dEnd = new Date(new Date(mo + "-01").getFullYear(), new Date(mo + "-01").getMonth() + 1, 0).toLocaleDateString('en-CA');
 
     sortedModels.forEach(m => {
-        let mRate = m.input > 0 ? (m.qty / m.input * 100).toFixed(2) : "0.00";
-        let uniqueAna = [...new Set(m.analysis)].join(" | ");
-        tblHtml += `<tr><td><strong>${m.name}</strong></td><td>${m.input}</td><td><b>${m.qty}</b></td><td>${mRate}%</td><td contenteditable="true" style="color:#555; border-left:1px dashed #ccc;">${uniqueAna || 'Add Analysis...'}</td></tr>`;
-        chartData.push([m.name, m.qty, String(m.qty)]);
+        tblHtml += `<tr style="cursor:pointer;" onclick="jumpToModelHistory('${m.name}', '${dStart}', '${dEnd}')">
+            <td><strong style="color:var(--primary); text-decoration:underline;">${m.name}</strong></td>
+            <td>${m.inp}</td>
+            <td>${m.def}</td>
+            <td><span class="status-badge ${m.rate>0.05?'bg-danger':(m.rate>0?'bg-warning':'bg-success')}">${m.rate.toFixed(2)}%</span></td>
+        </tr>`;
     });
+    document.getElementById('mo_model_table_body').innerHTML = tblHtml;
 
-    document.getElementById('defect_detail_body').innerHTML = tblHtml;
-    document.getElementById('defect_excel_body').innerHTML = xlsHtml;
-    document.getElementById('defect_print_area').style.display='block';
-
-    chartInstances['Defect'] = new google.visualization.ColumnChart(document.getElementById('d_contrib_chart'));
-    chartInstances['Defect'].draw(google.visualization.arrayToDataTable(chartData), { backgroundColor:'transparent', legend:'none', title:'Defect Count by Model', colors:['#EA5455'], chartArea:{width:'90%', height:'80%'} });
+    let anaHtml = "";
+    sortedModels.filter(m => m.def > 0).forEach(m => {
+        let defectKeys = Object.keys(m.defects);
+        if(defectKeys.length > 0) {
+            anaHtml += `<div style="margin-bottom:20px; border:1px solid #ddd; border-radius:8px; overflow:hidden;">
+                <div style="background:#f1f1f1; padding:10px 15px; font-weight:bold; color:#002B5B; border-bottom:1px solid #ddd;">
+                    ${m.name} <span style="font-size:11px; font-weight:normal; color:#666;">(Total Defects: ${m.def})</span>
+                </div>
+                <div style="padding:15px; background:#fff;">`;
+            defectKeys.forEach(dName => {
+                let dObj = m.defects[dName];
+                let uniqueAna = [...new Set(dObj.ana)].join(" | ");
+                anaHtml += `<div style="margin-bottom:10px;">
+                    <span style="font-weight:700; color:#d32f2f; font-size:12px;">● ${dName} (${dObj.qty}):</span> 
+                    <span contenteditable="true" style="color:#444; font-size:13px; border-bottom:1px dashed #ccc; display:inline-block; min-width:200px;">${uniqueAna || 'Add analysis...'}</span>
+                </div>`;
+            });
+            anaHtml += `</div></div>`;
+        }
+    });
+    document.getElementById('mo_detailed_analysis').innerHTML = anaHtml || "<p style='text-align:center; padding:20px;'>No defects found for this month.</p>";
 }
 
+function jumpToModelHistory(modelName, start, end) {
+    showPage('model_report', document.querySelectorAll('.nav-btn')[3]); 
+    document.getElementById('m_date_start').value = start;
+    document.getElementById('m_date_end').value = end;
+    document.querySelectorAll('#checkboxes input').forEach(cb => cb.checked = false);
+    let chk = document.querySelector(`#checkboxes input[value="${modelName}"]`);
+    if(chk) { chk.checked = true; genModelReport(); } else { alert("Model not found in current list"); }
+}
 
 function downloadPDF(id, name){ let opt = { margin: 10, filename: name, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }; html2pdf().from(document.getElementById(id)).set(opt).save(); }
-
-// Simple outerHTML Excel Export (Handles rowspans natively)
-function downloadExcel(id, name){ 
-    let html = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-        <meta charset="utf-8" />
-        <style>
-            table { border-collapse: collapse; font-family: Calibri, sans-serif; font-size: 11pt; }
-            th, td { border: .5pt solid windowtext; vertical-align: middle; }
-            th { background-color: #F8FAFC; color: #002B5B; font-weight: bold; text-align: left; }
-            td { text-align: left; }
-            .def-qty { color: #D72323; font-weight: bold; }
-            .rca-cell { background-color: #FCF9E3; }
-        </style>
-    </head>
-    <body>
-        <h2>Califonix Report Output</h2>
-        ${document.getElementById(id).outerHTML}
-    </body>
-    </html>`;
-    
-    let link = document.createElement("a"); link.download = name; 
-    let blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-    link.href = URL.createObjectURL(blob); link.click(); 
-}
-
+function downloadExcel(id, name){ let html = document.getElementById(id).outerHTML; let link = document.createElement("a"); link.download = name; link.href = 'data:application/vnd.ms-excel,' + escape(html); link.click(); }
 function downloadProfessionalPPT(type) {
     let pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE';
     let s1 = pptx.addSlide(); s1.addImage({ path: LOGO_URL, x: 0.5, y: 0.3, w: 2, h: 0.8 }); s1.background = { color: "F1F1F1" }; s1.addText("Califonix Systems", { x: 0.5, y: 1.5, fontSize: 32, color: "002060", bold: true }); s1.addText(type + " Analysis Report", { x: 0.5, y: 2.5, fontSize: 24, color: "333333" }); s1.addText("Generated on: " + new Date().toDateString(), { x: 0.5, y: 3.5, fontSize: 14, color: "666666" });
@@ -948,6 +965,411 @@ function downloadProfessionalPPT(type) {
         let s3 = pptx.addSlide(); s3.addImage({ path: LOGO_URL, x: 11, y: 0.3, w: 1.5, h: 0.6 }); s3.addText("Defect Contribution", { x: 0.5, y: 0.5, fontSize: 18, color: "002060" }); try { if(chartInstances['Defect']) s3.addImage({ data: chartInstances['Defect'].getImageURI(), x: 1, y: 1.5, w: 10, h: 4 }); } catch(e){}
     }
     pptx.writeFile({ fileName: `Califonix_${type}_Report.pptx` });
+}
+
+/* -------------------------------------------------------------------------
+   EXECUTIVE MATRIX LOGIC
+------------------------------------------------------------------------- */
+function genMatrixReport() {
+    let baseStr = document.getElementById('matrix_month').value;
+    if(!baseStr) return alert("Select a Base Month");
+
+    let d3 = new Date(baseStr + "-01");
+    let m3 = baseStr;
+    
+    let d2 = new Date(d3); d2.setMonth(d3.getMonth() - 1);
+    let m2 = d2.toISOString().substring(0,7);
+    
+    let d1 = new Date(d2); d1.setMonth(d2.getMonth() - 1);
+    let m1 = d1.toISOString().substring(0,7);
+
+    let monthsStr = [m1, m2, m3];
+    
+    let mLabels = monthsStr.map(m => {
+        let dateObj = new Date(m + "-01");
+        return dateObj.toLocaleString('en-US', {month: 'long'}) + " ~ " + dateObj.getFullYear();
+    });
+
+    let matrixData = currentData.filter(r => {
+        let rd = normalizeDate(r[0]).substring(0,7);
+        return monthsStr.includes(rd);
+    });
+
+    let m3Defects = {};
+    matrixData.filter(r => normalizeDate(r[0]).startsWith(m3)).forEach(r => {
+        try {
+            JSON.parse(r[7]).forEach(d => {
+                if(!m3Defects[d.name]) m3Defects[d.name] = 0;
+                m3Defects[d.name] += (+d.qty);
+            });
+        } catch(e){}
+    });
+    
+    let top3Defects = Object.keys(m3Defects)
+        .map(k => ({name: k, qty: m3Defects[k]}))
+        .sort((a,b) => b.qty - a.qty)
+        .slice(0,3)
+        .map(x => x.name);
+
+    while(top3Defects.length < 3) top3Defects.push("-");
+
+    let models = {}; 
+
+    matrixData.forEach(r => {
+        let mDate = normalizeDate(r[0]).substring(0,7);
+        let mod = r[2];
+        let inp = +r[3];
+        let def = +r[4];
+
+        if(!models[mod]) {
+            models[mod] = {
+                [m1]: {i:0, d:0}, [m2]: {i:0, d:0}, [m3]: {i:0, d:0},
+                analysis: { [top3Defects[0]]:[], [top3Defects[1]]:[], [top3Defects[2]]:[] }
+            };
+        }
+
+        models[mod][mDate].i += inp;
+        models[mod][mDate].d += def;
+
+        if(mDate === m3) {
+            try {
+                JSON.parse(r[7]).forEach(dItem => {
+                    if(top3Defects.includes(dItem.name) && dItem.analysis) {
+                        models[mod].analysis[dItem.name].push(dItem.analysis);
+                    }
+                });
+            } catch(e){}
+        }
+    });
+
+    let tableHTML = `
+    <table class="matrix-table" id="matrix_table_display">
+        <thead>
+            <tr>
+                <th colspan="7" class="matrix-header-main">Califonix SMT Report</th>
+            </tr>
+            <tr>
+                <th class="matrix-header-sub">Model</th>
+                <th class="matrix-header-sub">${mLabels[0]}</th>
+                <th class="matrix-header-sub">${mLabels[1]}</th>
+                <th class="matrix-header-sub">${mLabels[2]}</th>
+                <th class="matrix-header-sub">${top3Defects[0]}</th>
+                <th class="matrix-header-sub">${top3Defects[1]}</th>
+                <th class="matrix-header-sub">${top3Defects[2]}</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    let validModels = Object.keys(models).filter(m => 
+        (models[m][m1].i > 0 || models[m][m2].i > 0 || models[m][m3].i > 0)
+    ).sort(); 
+
+    if(validModels.length === 0) {
+        tableHTML += `<tr><td colspan="7" style="padding:20px;">No data found.</td></tr>`;
+    }
+
+    validModels.forEach(mod => {
+        let rowData = models[mod];
+        
+        let getCell = (mData) => {
+            if(mData.i === 0) return { val: "", class: "matrix-green" };
+            let rate = (mData.d / mData.i * 100);
+            let classStr = rate > 3.0 ? "matrix-red" : "matrix-green";
+            return { val: rate.toFixed(2) + "%", class: classStr };
+        };
+
+        let c1 = getCell(rowData[m1]);
+        let c2 = getCell(rowData[m2]);
+        let c3 = getCell(rowData[m3]);
+
+        let getAnalysis = (defName) => {
+            if(defName === "-") return "";
+            let uniqueList = [...new Set(rowData.analysis[defName])].filter(Boolean);
+            if(uniqueList.length === 0) return "";
+            let formatted = uniqueList.map((txt, idx) => `${idx+1}) ${txt}`).join('<br style="mso-data-placement:same-cell;">');
+            return formatted;
+        };
+
+        let a1 = getAnalysis(top3Defects[0]);
+        let a2 = getAnalysis(top3Defects[1]);
+        let a3 = getAnalysis(top3Defects[2]);
+
+        tableHTML += `
+            <tr>
+                <td class="matrix-model">${mod}</td>
+                <td class="${c1.class}">${c1.val}</td>
+                <td class="${c2.class}">${c2.val}</td>
+                <td class="${c3.class}">${c3.val}</td>
+                <td class="matrix-text">${a1}</td>
+                <td class="matrix-text">${a2}</td>
+                <td class="matrix-text">${a3}</td>
+            </tr>
+        `;
+    });
+
+    tableHTML += `</tbody></table>`;
+    document.getElementById('matrix_container').innerHTML = tableHTML;
+}
+
+function exportCustomExcel(tableId, filename) {
+    let table = document.getElementById(tableId);
+    if(!table) return;
+
+    let excelTemplate = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+    <!--[if gte mso 9]>
+    <xml>
+        <x:ExcelWorkbook>
+            <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                    <x:Name>Model Wise Sumry</x:Name>
+                    <x:WorksheetOptions>
+                        <x:DisplayGridlines/>
+                    </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+    </xml>
+    <![endif]-->
+    <style>
+        table { border-collapse: collapse; font-family: Calibri, sans-serif; font-size: 11pt; }
+        th, td { border: .5pt solid windowtext; vertical-align: top; }
+        .matrix-header-main { background-color: #B4C6E7; font-size: 14pt; font-weight: bold; text-align: center; }
+        .matrix-header-sub { background-color: #FFF2CC; text-align: center; font-weight: bold; }
+        .matrix-green { background-color: #C6E0B4; color: black; font-weight: bold; text-align: center; }
+        .matrix-red { background-color: #F8CBAD; color: #C00000; font-weight: bold; text-align: center; }
+        .matrix-model { color: #0563C1; text-decoration: underline; font-weight: bold; text-align: left; }
+        .matrix-text { text-align: left; white-space: normal; word-wrap: break-word; }
+    </style>
+    </head>
+    <body>
+        ${table.outerHTML}
+    </body>
+    </html>
+    `;
+
+    let blob = new Blob([excelTemplate], { type: 'application/vnd.ms-excel' });
+    let url = URL.createObjectURL(blob);
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+}
+
+/* -------------------------------------------------------------------------
+   MASSIVE MULTI-SHEET EXCEL EXPORTER (SHEETJS) - NEW FUNCTION ADDED
+------------------------------------------------------------------------- */
+function generateMasterExcel() {
+    let moStr = document.getElementById('mo_picker').value; 
+    if(!moStr) return alert("Please select a month first!");
+    
+    document.getElementById('loader').style.display = 'flex';
+    document.querySelector('#loader h3').innerText = "Generating Master Workbook...";
+
+    setTimeout(() => {
+        try {
+            // Combine all categories for the master report
+            let allRawData = [];
+            rawData.earbuds.forEach(r => allRawData.push([...r, 'Earbuds']));
+            rawData.charging_case.forEach(r => allRawData.push([...r, 'Charging Case']));
+
+            // Filter for Selected Month & Prev Month
+            let currMonthData = allRawData.filter(r => normalizeDate(r[0]).startsWith(moStr));
+            let dObj = new Date(moStr + "-01");
+            dObj.setMonth(dObj.getMonth() - 1);
+            let prevMoStr = dObj.toISOString().substring(0,7);
+            let prevMonthData = allRawData.filter(r => normalizeDate(r[0]).startsWith(prevMoStr));
+
+            let wb = XLSX.utils.book_new();
+            
+            // --- DATA AGGREGATIONS ---
+            let totInp = 0, totDef = 0;
+            let prevInp = 0, prevDef = 0;
+            
+            let defectMap = {}; // name -> {qty, occ}
+            let modelMap = {}; // name -> {cat, inp, def}
+            let matrixMap = {}; // model -> {cat, defects:{dname: qty}}
+            let uniqueDefectsForMatrix = new Set();
+            let weeklyMap = {}; // wk -> {dateRng, inp, def}
+            
+            let rawDailyAoa = [['Date', 'Category', 'Model', 'Line', 'Shift', 'Prepared By', 'Input Qty', 'Total Defect Qty', 'Rejection %']];
+            let rawDefectAoa = [['Date', 'Category', 'Model', 'Line', 'Shift', 'Defect Name', 'Defect Qty', 'Analysis / Root Cause']];
+
+            // Prev Month Stats
+            prevMonthData.forEach(r => { prevInp += (+r[3]); prevDef += (+r[4]); });
+            let prevRate = prevInp > 0 ? (prevDef/prevInp*100) : 0;
+
+            // Curr Month Processing
+            currMonthData.forEach(r => {
+                let date = normalizeDate(r[0]);
+                let line = r[1], mod = r[2], inp = +r[3], def = +r[4], rateStr = formatPct(r[5]), prep = r[6], shift = r[8], cat = r[11];
+                
+                totInp += inp; totDef += def;
+                
+                // Model Aggregation
+                if(!modelMap[mod]) modelMap[mod] = {cat: cat, inp:0, def:0};
+                modelMap[mod].inp += inp; modelMap[mod].def += def;
+                
+                // Matrix Aggregation
+                if(!matrixMap[mod]) matrixMap[mod] = {cat: cat, defects: {}};
+                
+                // Weekly Aggregation
+                let day = parseInt(date.split('-')[2]);
+                let wkNum = Math.ceil(day / 7);
+                if(wkNum > 5) wkNum = 5;
+                let wkKey = `Week ${wkNum}`;
+                if(!weeklyMap[wkKey]) weeklyMap[wkKey] = {inp:0, def:0};
+                weeklyMap[wkKey].inp += inp;
+                weeklyMap[wkKey].def += def;
+
+                // Raw Daily
+                rawDailyAoa.push([date, cat, mod, line, shift, prep, inp, def, rateStr]);
+
+                try {
+                    JSON.parse(r[7]).forEach(d => {
+                        let dName = d.name;
+                        let dQty = +d.qty;
+                        
+                        // Defect Map (Pareto)
+                        if(!defectMap[dName]) defectMap[dName] = {qty:0, occ:0};
+                        defectMap[dName].qty += dQty;
+                        defectMap[dName].occ += 1;
+                        
+                        // Matrix
+                        if(!matrixMap[mod].defects[dName]) matrixMap[mod].defects[dName] = 0;
+                        matrixMap[mod].defects[dName] += dQty;
+                        uniqueDefectsForMatrix.add(dName);
+                        
+                        // Raw Defect
+                        rawDefectAoa.push([date, cat, mod, line, shift, dName, dQty, d.analysis || ""]);
+                    });
+                } catch(e){}
+            });
+
+            let currRate = totInp > 0 ? (totDef/totInp*100) : 0;
+            let diffRate = currRate - prevRate;
+            let diffStr = (diffRate > 0 ? "+" : "") + diffRate.toFixed(2) + "%";
+
+            // --- SHEET 1: Dashboard ---
+            let dashDateStr = new Date(moStr + "-01").toLocaleString('en-US', {month:'long', year:'numeric'}).toUpperCase();
+            let dashAoa = [
+                [`${dashDateStr} — SMT / PCBA QUALITY REVIEW`],
+                ["CF Factory (Califonix) | ODM Supplier Quality — Earbuds & Charging Case"],
+                [],
+                ["TOTAL INPUT QTY", "TOTAL DEFECT QTY", "REJECTION %", "vs PREV MONTH REJECTION %"],
+                [totInp, totDef, currRate.toFixed(2)+"%", diffStr],
+                [],
+                ["(Note: Graphical charts are best viewed in the web dashboard interface.)"]
+            ];
+            let ws1 = XLSX.utils.aoa_to_sheet(dashAoa);
+            XLSX.utils.book_append_sheet(wb, ws1, "Dashboard");
+
+            // --- SHEET 2: Defect Analysis (Pareto) ---
+            let paretoAoa = [['Rank', 'Defect Name', 'Total Qty', 'Occurrence', '% Contribution', 'Cumulative %', 'Pareto Class']];
+            let sortedDefects = Object.keys(defectMap).map(k => ({n:k, q:defectMap[k].qty, o:defectMap[k].occ})).sort((a,b)=>b.q-a.q);
+            let cumQty = 0;
+            sortedDefects.forEach((d, idx) => {
+                let pct = totDef > 0 ? (d.q / totDef) : 0;
+                cumQty += d.q;
+                let cumPct = totDef > 0 ? (cumQty / totDef) : 0;
+                let pClass = cumPct <= 0.8 ? "A - Vital Few" : (cumPct <= 0.95 ? "B - Useful Many" : "C - Trivial Many");
+                paretoAoa.push([idx+1, d.n, d.q, d.o, (pct*100).toFixed(2)+"%", (cumPct*100).toFixed(2)+"%", pClass]);
+            });
+            let ws2 = XLSX.utils.aoa_to_sheet(paretoAoa);
+            XLSX.utils.book_append_sheet(wb, ws2, "Defect Analysis (Pareto)");
+
+            // --- SHEET 3: Model Performance ---
+            let modPerfAoa = [['Rank', 'Model', 'Category', 'Input Qty', 'Defect Qty', 'Rejection %', 'Rejection Level']];
+            let sortedModels = Object.keys(modelMap).map(k => ({n:k, ...modelMap[k]})).sort((a,b)=>b.def-a.def);
+            sortedModels.forEach((m, idx) => {
+                let rate = m.inp > 0 ? (m.def/m.inp*100) : 0;
+                let lvl = rate > 3.0 ? "High" : (rate >= 1.0 ? "Medium" : "Low");
+                modPerfAoa.push([idx+1, m.n, m.cat, m.inp, m.def, rate.toFixed(2)+"%", lvl]);
+            });
+            let ws3 = XLSX.utils.aoa_to_sheet(modPerfAoa);
+            XLSX.utils.book_append_sheet(wb, ws3, "Model Performance");
+
+            // --- SHEET 4: Model x Defect Matrix ---
+            let uDefs = Array.from(uniqueDefectsForMatrix).sort();
+            let matrixAoa = [['Model', 'Category', ...uDefs]];
+            Object.keys(matrixMap).sort().forEach(m => {
+                let row = [m, matrixMap[m].cat];
+                uDefs.forEach(dName => {
+                    row.push(matrixMap[m].defects[dName] || 0);
+                });
+                matrixAoa.push(row);
+            });
+            let ws4 = XLSX.utils.aoa_to_sheet(matrixAoa);
+            XLSX.utils.book_append_sheet(wb, ws4, "Model x Defect Matrix");
+
+            // --- SHEET 5: Model-Wise Detail Report (Flat representation of Rowspan) ---
+            let detailAoa = [['Model Name', 'Total Input', 'Total Model Def %', 'Specific Defect', 'Defect Qty', 'Root Cause / Corrective Action']];
+            Object.keys(matrixMap).sort().forEach(mod => {
+                let mObj = matrixMap[mod];
+                let mPerf = modelMap[mod];
+                let mRateStr = mPerf.inp > 0 ? (mPerf.def/mPerf.inp*100).toFixed(2)+"%" : "0%";
+                
+                let mDefects = [];
+                currMonthData.filter(r => r[2]===mod).forEach(r => {
+                    try{ JSON.parse(r[7]).forEach(d=> mDefects.push(d)); }catch(e){}
+                });
+                
+                let aggMDef = {};
+                mDefects.forEach(d => {
+                    if(!aggMDef[d.name]) aggMDef[d.name] = {qty:0, ana:[]};
+                    aggMDef[d.name].qty += (+d.qty);
+                    if(d.analysis) aggMDef[d.name].ana.push(d.analysis);
+                });
+
+                let dKeys = Object.keys(aggMDef).sort((a,b)=>aggMDef[b].qty - aggMDef[a].qty);
+                if(dKeys.length === 0) {
+                    detailAoa.push([mod, mPerf.inp, mRateStr, "-", 0, "-"]);
+                } else {
+                    dKeys.forEach((dk, idx) => {
+                        let rca = [...new Set(aggMDef[dk].ana)].filter(Boolean).join(" | ");
+                        // To simulate merged rows in Excel flatly, we only print model name on first row
+                        let dispMod = idx === 0 ? mod : "";
+                        let dispInp = idx === 0 ? mPerf.inp : "";
+                        let dispRate = idx === 0 ? mRateStr : "";
+                        detailAoa.push([dispMod, dispInp, dispRate, dk, aggMDef[dk].qty, rca]);
+                    });
+                }
+            });
+            let ws5 = XLSX.utils.aoa_to_sheet(detailAoa);
+            XLSX.utils.book_append_sheet(wb, ws5, "Model-Wise Detail Report");
+
+            // --- SHEET 6: Weekly Trend ---
+            let wkAoa = [['Week', 'Input Qty', 'Defect Qty', 'Rejection %']];
+            Object.keys(weeklyMap).sort().forEach(wk => {
+                let wObj = weeklyMap[wk];
+                let wRate = wObj.inp > 0 ? (wObj.def/wObj.inp*100).toFixed(2)+"%" : "0%";
+                wkAoa.push([wk, wObj.inp, wObj.def, wRate]);
+            });
+            let ws6 = XLSX.utils.aoa_to_sheet(wkAoa);
+            XLSX.utils.book_append_sheet(wb, ws6, "Weekly Trend");
+
+            // --- SHEET 7: Raw Data Daily ---
+            let ws7 = XLSX.utils.aoa_to_sheet(rawDailyAoa);
+            XLSX.utils.book_append_sheet(wb, ws7, "Raw Data - Daily");
+
+            // --- SHEET 8: Raw Data Defect Detail ---
+            let ws8 = XLSX.utils.aoa_to_sheet(rawDefectAoa);
+            XLSX.utils.book_append_sheet(wb, ws8, "Raw Data - Defect Detail");
+
+            // DOWNLOAD
+            XLSX.writeFile(wb, `SMT_Quality_Report_${dashDateStr}.xlsx`);
+            
+        } catch(e) {
+            console.error(e);
+            alert("Error generating Master Excel. See console.");
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }, 500);
 }
 </script>
 </body>
